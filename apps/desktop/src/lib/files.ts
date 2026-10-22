@@ -1,4 +1,5 @@
 import { mediumFromFile, titleFromFileName } from "@myndshelf/core";
+import { pdfCover } from "./documents";
 import { fileStore, library } from "./store";
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -60,6 +61,7 @@ export async function addCreationsFromFiles(files: FileList | File[], shelfId: s
     try {
       if (medium === "image") preview = await downscaleImage(file);
       if (medium === "video") preview = await videoPoster(file);
+      if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") preview = await pdfCover(file);
     } catch {
       /* formato sem prévia no webview (ex.: PSD) */
     }

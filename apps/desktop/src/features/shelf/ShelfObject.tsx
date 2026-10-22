@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Creation } from "@myndshelf/types";
+import { codeLanguageOf } from "@myndshelf/core";
 
 /**
  * A criação como objeto físico — contra a "não-coisa" digital (Byung-Chul Han):
@@ -23,13 +24,20 @@ const OBJECTS: Record<Creation["medium"], (c: Creation) => React.JSX.Element> = 
       </div>
     </div>
   ),
-  document: (c) => (
+  document: (c) =>
+    c.preview ? (
+      // PDF: a primeira página vira a capa do livro
+      <div className="obj-tome obj-tome-cover">
+        <img src={c.preview} alt="" draggable={false} />
+        <span className="obj-tome-spine" />
+      </div>
+    ) : (
     <div className="obj-tome">
       <span className="obj-tome-band" />
       <strong>{c.title}</strong>
       <span className="mono">{c.year}</span>
     </div>
-  ),
+    ),
   audio: (c) => (
     <div className="obj-tape">
       <div className="obj-tape-label">
@@ -61,6 +69,29 @@ const OBJECTS: Record<Creation["medium"], (c: Creation) => React.JSX.Element> = 
       </div>
     </div>
   ),
+  code: (c) => {
+    // um disquete para qualquer código; a cor e a etiqueta dizem a linguagem
+    const lang = codeLanguageOf(c.fileName);
+    return (
+      <div className="obj-floppy" style={{ "--lang": lang.color } as CSSProperties}>
+        <div className="obj-floppy-window">
+          <span className="obj-floppy-disk" />
+          <span className="obj-floppy-shutter">
+            <i />
+          </span>
+        </div>
+        <div className="obj-floppy-label">
+          <span className="obj-floppy-lang mono">
+            <span>{lang.name}</span>
+            {lang.ext && <b>.{lang.ext}</b>}
+          </span>
+          <strong>{c.title}</strong>
+          <span className="obj-floppy-lines" />
+        </div>
+        <span className="obj-floppy-notch" />
+      </div>
+    );
+  },
   object: (c) => (
     <div className="obj-jar">
       <div className="obj-jar-glass">

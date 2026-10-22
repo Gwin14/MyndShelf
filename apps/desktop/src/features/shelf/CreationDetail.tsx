@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Download, Star, Trash2 } from "lucide-react";
+import { BookOpen, Download, Star, Trash2 } from "lucide-react";
 import { formatBytes, MEDIUM_LABELS } from "@myndshelf/core";
 import type { Creation, CreationMedium } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
 import { Modal } from "../../components/Modal";
 import { fileStore, library, useLibrary } from "../../lib/store";
+import { docKindOf, docLabel } from "../../lib/documents";
+import { DocumentViewer } from "./DocumentViewer";
 import { ShelfObject } from "./ShelfObject";
 
 /** Carrega o arquivo original guardado para tocar/ver dentro do app. */
@@ -26,7 +28,9 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
   const item = useLibrary((s) => s.creations.find((c) => c.id === id));
   const shelves = useLibrary((s) => s.shelves);
   const blobUrl = useBlobUrl(id);
+  const [reading, setReading] = useState(false);
   if (!item) return null;
+  const docKind = docKindOf(item);
   const update = (patch: Partial<Creation>) => library.getState().updateCreation(id, patch);
 
   return (
@@ -38,6 +42,10 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
               <img className="detail-media" src={blobUrl} alt="" />
             ) : item.medium === "video" && blobUrl ? (
               <video className="detail-media" src={blobUrl} controls poster={item.preview} />
+            ) : docKind ? (
+              <button className="detail-doc" onClick={() => setReading(true)} title="Abrir documento">
+                <ShelfObject item={item} />
+              </button>
             ) : (
               <ShelfObject item={item} />
             )}
@@ -102,6 +110,11 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
           <AddToProject kind="creation" refId={item.id} />
 
           <div className="detail-actions">
+            {docKind && (
+              <button className="btn btn-flare" onClick={() => setReading(true)}>
+                <BookOpen size={14} /> Abrir {docLabel(docKind, item.fileName)}
+              </button>
+            )}
             <button
               className={`btn ${item.featured ? "btn-flare" : ""}`}
               onClick={() => update({ featured: !item.featured })}
@@ -127,6 +140,7 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
           </div>
         </div>
       </div>
+      {reading && <DocumentViewer item={item} onClose={() => setReading(false)} />}
     </Modal>
   );
 }

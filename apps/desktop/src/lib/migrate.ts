@@ -1,4 +1,4 @@
-import { hostOf, improveImage } from "@myndshelf/core";
+import { hostOf, improveImage, isCodeFile } from "@myndshelf/core";
 import { refreshCapture } from "./capture";
 import { flags, library } from "./store";
 
@@ -15,6 +15,15 @@ export async function migrate() {
       if (better && better !== c.image) updateCapture(c.id, { image: better });
       // links da Amazon: relê a página para reconhecer livros, capa e autor
       if (/(^|\.)amazon\./.test(hostOf(c.url))) void refreshCapture(c.id);
+    }
+  }
+
+  if (!(await flags.get("code-medium-1"))) {
+    await flags.set("code-medium-1");
+    // arquivos de código guardados como "texto"/"objeto" viram disquetes
+    const { creations, updateCreation } = library.getState();
+    for (const c of creations) {
+      if (c.medium !== "code" && isCodeFile(c.fileName)) updateCreation(c.id, { medium: "code" });
     }
   }
 }

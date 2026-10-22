@@ -99,7 +99,7 @@ export interface FeedEntry {
 
 /* ───────────────────────────── Estante ───────────────────────────── */
 
-export type CreationMedium = "image" | "document" | "audio" | "video" | "text" | "object";
+export type CreationMedium = "image" | "document" | "audio" | "video" | "text" | "code" | "object";
 
 export interface Creation {
   id: string;

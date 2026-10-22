@@ -225,3 +225,8 @@ textarea.field {
     transition-duration: 1ms !important;
   }
 }
+
+a.btn {
+  color: inherit;
+  text-decoration: none;
+}
