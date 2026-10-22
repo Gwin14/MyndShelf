@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Expand, ExternalLink, Play, Radio, RefreshCw, Trash2 } from "lucide-react";
+import { BookOpen, Expand, ExternalLink, MapPin, Play, Radio, RefreshCw, Trash2 } from "lucide-react";
 import { describeFeedSource, KIND_LABELS, relativeDate, VIEW_LABELS, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem, CaptureKind } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
@@ -108,7 +108,7 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
           <div className="detail-actions">
             {mode && (
               <button className="btn btn-flare" onClick={view}>
-                {mode === "play" ? <Play size={14} fill="currentColor" /> : mode === "read" ? <BookOpen size={14} /> : <Expand size={14} />}
+                {mode === "play" ? <Play size={14} fill="currentColor" /> : mode === "read" ? <BookOpen size={14} /> : mode === "map" ? <MapPin size={14} /> : <Expand size={14} />}
                 {VIEW_LABELS[mode]}
               </button>
             )}

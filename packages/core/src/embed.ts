@@ -77,10 +77,11 @@ export function getEmbed(url?: string): Embed | undefined {
   return undefined;
 }
 
-export type ViewMode = "play" | "read" | "image";
+export type ViewMode = "play" | "read" | "image" | "map";
 
 /** Como um item pode ser aberto dentro do app (ou undefined se só no navegador). */
 export function viewModeOf(item: CaptureItem): ViewMode | undefined {
+  if (item.place?.lat != null) return "map";
   if (getEmbed(item.url)) return "play";
   if (item.kind === "image" && item.image) return "image";
   if (item.url && ["article", "code", "link"].includes(item.kind)) return "read";
@@ -91,4 +92,5 @@ export const VIEW_LABELS: Record<ViewMode, string> = {
   play: "Reproduzir",
   read: "Ler",
   image: "Ver",
+  map: "Ver no mapa",
 };

@@ -10,6 +10,14 @@ export async function fetchHtml(url: string): Promise<string> {
   return res.text();
 }
 
+/** Destino final de um link curto (segue redirecionamentos). */
+export async function resolveUrl(url: string): Promise<string> {
+  if (isTauri) return invoke<string>("resolve_url", { url });
+  const res = await fetch(`/__resolve?url=${encodeURIComponent(url)}`);
+  if (!res.ok) throw new Error(`resolve failed: ${res.status}`);
+  return res.text();
+}
+
 export async function openExternal(url: string) {
   if (isTauri) {
     const { openUrl } = await import("@tauri-apps/plugin-opener");

@@ -67,7 +67,13 @@ export function parseOpenGraph(html: string, pageUrl: string): OpenGraphData {
   const titleTag = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   const base = absolutize(canonical, pageUrl) ?? pageUrl;
 
+  const geo = (meta["geo.position"] ?? meta["icbm"])?.split(/[;,]/);
+  const lat = parseFloat(meta["place:location:latitude"] ?? meta["og:latitude"] ?? geo?.[0] ?? "");
+  const lng = parseFloat(meta["place:location:longitude"] ?? meta["og:longitude"] ?? geo?.[1] ?? "");
+  const hasGeo = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+
   return {
+    ...(hasGeo ? { latitude: lat, longitude: lng } : {}),
     title: meta["og:title"] ?? meta["twitter:title"] ?? (titleTag ? decodeEntities(titleTag.trim()) : undefined),
     description: meta["og:description"] ?? meta["twitter:description"] ?? meta["description"],
     image: absolutize(

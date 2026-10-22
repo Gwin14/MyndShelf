@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ExternalLink, Minus, Moon, Plus, Sun } from "lucide-react";
-import { getEmbed, hostOf, viewModeOf } from "@myndshelf/core";
+import { ArrowLeft, Copy, ExternalLink, Minus, Moon, Plus, Sun } from "lucide-react";
+import { formatCoords, getEmbed, hostOf, mapLinks, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
 import { openExternal } from "../../lib/platform";
 import { loadArticle, type Article } from "../../lib/reader";
@@ -43,6 +43,7 @@ export function Viewer({ item, onClose }: { item: CaptureItem | undefined; onClo
       {mode === "play" && <Player item={item} />}
       {mode === "image" && <Lightbox item={item} />}
       {mode === "read" && <Reader item={item} />}
+      {mode === "map" && <PlaceMap item={item} />}
     </div>,
     document.body,
   );
@@ -88,6 +89,48 @@ function Player({ item }: { item: CaptureItem }) {
           {item.author ? ` · ${item.author}` : ""}
         </p>
       </div>
+    </div>
+  );
+}
+
+function PlaceMap({ item }: { item: CaptureItem }) {
+  const p = item.place!;
+  const [copied, setCopied] = useState(false);
+  const z = p.zoom ?? 16;
+  const d = (360 / 2 ** z) * 2.2;
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${p.lng! - d},${p.lat! - d * 0.6},${p.lng! + d},${p.lat! + d * 0.6}&layer=mapnik&marker=${p.lat},${p.lng}`;
+  const coords = `${p.lat!.toFixed(6)}, ${p.lng!.toFixed(6)}`;
+
+  return (
+    <div className="viewer-place">
+      <div className="viewer-place-map">
+        <iframe src={src} title={item.title} referrerPolicy="strict-origin-when-cross-origin" />
+      </div>
+      <aside className="viewer-place-side">
+        <p className="kicker">{p.provider ?? "Lugar"}</p>
+        <h2 className="viewer-title">{item.title}</h2>
+        {p.address && <p className="viewer-sub">{p.address}</p>}
+        {p.query && p.query !== item.title && <p className="viewer-place-query mono">busca: “{p.query}”</p>}
+        <button
+          className="viewer-place-coords mono"
+          title="Copiar coordenadas"
+          onClick={() => {
+            void navigator.clipboard?.writeText(coords);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1600);
+          }}
+        >
+          {formatCoords(p.lat!, p.lng!)} <Copy size={11} /> {copied && <em>copiado</em>}
+        </button>
+        <p className="label mono">Abrir em</p>
+        <div className="viewer-place-links">
+          {mapLinks(p).map((l) => (
+            <button key={l.label} className="btn" onClick={() => openExternal(l.url)}>
+              <ExternalLink size={13} /> {l.label}
+            </button>
+          ))}
+        </div>
+      </aside>
     </div>
   );
 }

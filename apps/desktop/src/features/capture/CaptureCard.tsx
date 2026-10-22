@@ -1,4 +1,4 @@
-import { BookOpen, Expand, Play } from "lucide-react";
+import { BookOpen, Expand, MapPin, Play } from "lucide-react";
 import { VIEW_LABELS, viewModeOf, type ViewMode } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
 import { Cover, SELF_CAPTIONED } from "./covers/Cover";
@@ -7,6 +7,7 @@ const VIEW_ICONS: Record<ViewMode, React.JSX.Element> = {
   play: <Play size={11} fill="currentColor" />,
   read: <BookOpen size={11} />,
   image: <Expand size={11} />,
+  map: <MapPin size={11} />,
 };
 
 export function CaptureCard({

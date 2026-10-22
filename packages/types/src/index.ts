@@ -6,6 +6,7 @@ export type CaptureKind =
   | "book"
   | "video"
   | "film"
+  | "game"
   | "article"
   | "image"
   | "code"
@@ -23,6 +24,23 @@ export interface OpenGraphData {
   favicon?: string;
   author?: string;
   themeColor?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface PlaceInfo {
+  lat?: number;
+  lng?: number;
+  /** nível de zoom sugerido pelo link (Google: 15z, OSM: #map=15/…) */
+  zoom?: number;
+  name?: string;
+  address?: string;
+  /** texto buscado quando o link é uma pesquisa ("café perto de mim") */
+  query?: string;
+  /** Google Maps, Apple Maps, OpenStreetMap… */
+  provider?: string;
+  /** centro da tela do mapa — só orienta a busca, não é o lugar */
+  near?: { lat: number; lng: number };
 }
 
 export type CaptureStatus = "loading" | "ready" | "error";
@@ -39,6 +57,8 @@ export interface CaptureItem {
   author?: string;
   /** Texto livre — para notas é o conteúdo; para links, um comentário. */
   note?: string;
+  /** Presente quando o item é um lugar no mapa. */
+  place?: PlaceInfo;
   tags: string[];
   status: CaptureStatus;
   /** Matiz (0–360) usada para tingir capas sem imagem. */

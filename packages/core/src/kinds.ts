@@ -10,6 +10,18 @@ interface Rule {
 
 /** Ordem importa: a primeira regra que bate vence. */
 const RULES: Rule[] = [
+  { kind: "game", host: /^(store\.steampowered\.com|steamcommunity\.com|s\.team)$/, path: /^\/(app|a)\/\d+/ },
+  { kind: "game", host: /(^|\.)epicgames\.com$/, path: /\/p\// },
+  { kind: "game", host: /(^|\.)gog\.com$/, path: /\/game\// },
+  { kind: "game", host: /(^|\.)nintendo\.[a-z.]+$/, path: /\/(products|detail)\// },
+  { kind: "game", host: /(^|\.)playstation\.com$/, path: /\/(concept|product|games)\// },
+  { kind: "game", host: /(^|\.)xbox\.com$/, path: /\/games\/store\// },
+  { kind: "game", host: /(^|\.)humblebundle\.com$/, path: /^\/store\/[^/]+/ },
+  { kind: "game", host: /(^|\.)(backloggd\.com|igdb\.com|rawg\.io|gamejolt\.com|roblox\.com)$/, path: /^\/games\// },
+  { kind: "game", host: /(^|\.)metacritic\.com$/, path: /^\/game\// },
+  { kind: "game", host: /(^|\.)howlongtobeat\.com$/, path: /^\/game\// },
+  { kind: "game", host: /\.itch\.io$/, path: /^\/[^/]+\/?$/ },
+  { kind: "game", ogType: /^(game|video\.game)$/ },
   { kind: "podcast", host: /open\.spotify\.com$/, path: /^\/(intl-[a-z]+\/)?(episode|show)\// },
   { kind: "podcast", host: /(podcasts\.apple\.com|overcast\.fm|pca\.st|pocketcasts\.com)$/ },
   { kind: "music", host: /(open\.spotify\.com|music\.apple\.com|bandcamp\.com|soundcloud\.com|music\.youtube\.com|deezer\.com|tidal\.com|last\.fm|discogs\.com|rateyourmusic\.com)$/ },
@@ -64,6 +76,7 @@ export const KIND_LABELS: Record<CaptureKind, string> = {
   book: "Livro",
   video: "Vídeo",
   film: "Filme",
+  game: "Jogo",
   article: "Leitura",
   image: "Imagem",
   code: "Código",

@@ -8,3 +8,5 @@ export * from "./embed";
 export * from "./feed";
 export * from "./feedResolve";
 export * from "./sites";
+export * from "./places";
+export * from "./games";

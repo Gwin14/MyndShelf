@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { CaptureItem } from "@myndshelf/types";
-import { hostOf, KIND_LABELS } from "@myndshelf/core";
+import { formatCoords, hostOf, KIND_LABELS } from "@myndshelf/core";
+import { MapTiles } from "../../../components/MapTiles";
 import { Play } from "lucide-react";
 import { Art } from "./Art";
 
@@ -119,6 +120,25 @@ function FilmCover({ item }: Props) {
   );
 }
 
+function GameCover({ item }: Props) {
+  return (
+    <div className="cv-cart">
+      <span className="cv-cart-grip" />
+      <div className="cv-cart-label">
+        <div className="cv-cart-art">
+          {item.image ? <Art src={item.image} /> : <div className="art art-fallback cv-cart-title">{item.title}</div>}
+          <span className="cv-sheen" />
+        </div>
+        <div className="cv-cart-band mono">
+          <span>{item.siteName}</span>
+          <span>✦</span>
+        </div>
+      </div>
+      <span className="cv-cart-arrow">▲</span>
+    </div>
+  );
+}
+
 function ArticleCover({ item }: Props) {
   const issue = String((item.hue * 7) % 97).padStart(2, "0");
   return (
@@ -174,6 +194,24 @@ function CodeCover({ item }: Props) {
 }
 
 function PlaceCover({ item }: Props) {
+  const p = item.place;
+  if (p?.lat != null && p.lng != null) {
+    return (
+      <div className="cv-postcard cv-mapcard">
+        <div className="cv-map">
+          <MapTiles lat={p.lat} lng={p.lng} zoom={p.zoom ?? 15} />
+          <span className="cv-map-tint" />
+          <span className="cv-pin">
+            <i />
+          </span>
+        </div>
+        <div className="cv-stamp">
+          <span>✦</span>
+        </div>
+        <span className="cv-mapcard-coords mono">{formatCoords(p.lat, p.lng)}</span>
+      </div>
+    );
+  }
   return (
     <div className="cv-postcard">
       <Art src={item.image} />
@@ -218,6 +256,7 @@ const COVERS: Record<CaptureItem["kind"], (p: Props) => React.JSX.Element> = {
   book: BookCover,
   video: VideoCover,
   film: FilmCover,
+  game: GameCover,
   article: ArticleCover,
   image: ImageCover,
   code: CodeCover,

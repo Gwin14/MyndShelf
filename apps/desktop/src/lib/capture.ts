@@ -1,15 +1,55 @@
-import { enrichLink, isProbablyUrl, looksLikeFeedUrl, normalizeUrl } from "@myndshelf/core";
-import { fetchHtml } from "./platform";
+import {
+  enrichLink,
+  enrichPlace,
+  formatCoords,
+  isMapUrl,
+  isProbablyUrl,
+  looksLikeFeedUrl,
+  normalizeUrl,
+  parseCoordinates,
+  placeFromCoordinates,
+  placeTitle,
+} from "@myndshelf/core";
+import { fetchHtml, resolveUrl } from "./platform";
 import { library } from "./store";
 import { downscaleImage } from "./files";
 import { subscribe } from "./feeds";
 import { useUi } from "./ui";
 
-/** Captura texto livre: vira link (com OpenGraph) ou nota. */
+/** Links de mapa viram lugares; o resto passa pelo OpenGraph. */
+function enrich(url: string) {
+  return isMapUrl(url) ? enrichPlace(url, fetchHtml, resolveUrl) : enrichLink(url, fetchHtml);
+}
+
+/** Coordenadas coladas como texto viram um lugar. */
+async function captureCoordinates(lat: number, lng: number) {
+  const { addCapture, updateCapture } = library.getState();
+  const id = addCapture({
+    kind: "place",
+    title: formatCoords(lat, lng),
+    place: { lat, lng, provider: "Coordenadas" },
+    siteName: "Coordenadas",
+    status: "loading",
+  });
+  const place = await placeFromCoordinates(lat, lng, fetchHtml);
+  updateCapture(id, { place, title: placeTitle(place), description: place.address, status: "ready" });
+  return id;
+}
+
+/** Captura texto livre: vira link (com OpenGraph), lugar ou nota. */
 export async function captureText(input: string): Promise<string | undefined> {
   const text = input.trim();
   if (!text) return;
   const { addCapture, updateCapture } = library.getState();
+
+  const coords = parseCoordinates(text);
+  if (coords) return captureCoordinates(coords.lat, coords.lng);
+
+  if (/^geo:/i.test(text)) {
+    const id = addCapture({ kind: "place", url: text, title: "Lugar", status: "loading" });
+    updateCapture(id, { ...(await enrich(text)), status: "ready" });
+    return id;
+  }
 
   if (!isProbablyUrl(text)) {
     const firstLine = text.split("\n")[0].slice(0, 80);
@@ -27,9 +67,9 @@ export async function captureText(input: string): Promise<string | undefined> {
       /* não era feed afinal — segue como link comum */
     }
   }
-  const id = addCapture({ kind: "link", url, title: url, status: "loading" });
+  const id = addCapture({ kind: isMapUrl(url) ? "place" : "link", url, title: url, status: "loading" });
   try {
-    const data = await enrichLink(url, fetchHtml);
+    const data = await enrich(url);
     updateCapture(id, { ...data, status: "ready" });
   } catch {
     updateCapture(id, { status: "error" });
@@ -52,7 +92,7 @@ export async function refreshCapture(id: string) {
   if (!item?.url) return;
   library.getState().updateCapture(id, { status: "loading" });
   try {
-    const data = await enrichLink(item.url, fetchHtml);
+    const data = await enrich(item.url);
     library.getState().updateCapture(id, { ...data, status: "ready" });
   } catch {
     library.getState().updateCapture(id, { status: "error" });

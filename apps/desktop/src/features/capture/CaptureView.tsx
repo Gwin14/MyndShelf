@@ -25,12 +25,14 @@ function estimateHeight(item: CaptureItem): number {
       return 1.2 + caption;
     case "video":
       return 0.92 + caption;
+    case "game":
+      return 1.18 + caption;
     case "film":
       return 0.82 + caption;
     case "image":
       return 1.15 + caption;
     case "place":
-      return 0.8 + caption;
+      return 0.92 + caption;
     case "article":
       return (item.image ? 1.25 : 0.75) + Math.min(0.4, (item.title.length / 60) * 0.2);
     case "code":

@@ -591,3 +591,164 @@
 .card:hover .cv-term-bar .mono {
   opacity: 0;
 }
+
+/* ── lugar com mapa: cartão-postal cartográfico ── */
+.cv-mapcard {
+  padding: 8px 8px 26px;
+}
+.cv-map {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 1px;
+  background: #e9dfc6;
+}
+.map-tiles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.map-tiles img {
+  position: absolute;
+  max-width: none;
+  /* atlas antigo: sépia leve sobre o mapa topográfico */
+  filter: sepia(0.42) saturate(0.85) hue-rotate(-6deg) contrast(1.03);
+}
+.cv-map-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(80, 50, 20, 0.28)),
+    linear-gradient(160deg, rgba(255, 220, 160, 0.12), rgba(60, 40, 110, 0.08));
+  mix-blend-mode: multiply;
+}
+.cv-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--c-sun), var(--c-ember) 60%, var(--c-magenta));
+  box-shadow: 0 0 0 2px #ece2cb, 0 0 14px rgba(255, 90, 36, 0.9);
+}
+.cv-pin i {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--c-ember);
+  animation: pin-ring 2.4s var(--ease) infinite;
+}
+@keyframes pin-ring {
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+.cv-mapcard .cv-stamp {
+  top: 16px;
+  right: 16px;
+}
+.cv-mapcard-coords {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 7px;
+  font-size: 8.5px;
+  color: #6e6352;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── jogo: cartucho ── */
+.cv-cart {
+  --plastic: hsl(var(--hue) 9% 30%);
+  --plastic-dark: hsl(var(--hue) 11% 19%);
+  position: relative;
+  width: 80%;
+  aspect-ratio: 0.84;
+  margin: 3% auto 2%;
+  padding: 15% 9% 13%;
+  /* canto inferior direito arredondado, como os cartuchos de bolso */
+  border-radius: 6px 6px 26px 6px;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0.1), transparent 30%),
+    linear-gradient(170deg, var(--plastic), var(--plastic-dark));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.35),
+    inset 3px 0 0 rgba(255, 255, 255, 0.04),
+    0 22px 30px -14px rgba(0, 0, 0, 0.9);
+  transition: transform var(--t-slow) var(--spring);
+}
+.card:hover .cv-cart {
+  transform: translateY(-6px) rotate(-1.5deg);
+}
+.cv-cart-grip {
+  position: absolute;
+  top: 4%;
+  left: 12%;
+  right: 12%;
+  height: 6%;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.32) 0 2px, rgba(255, 255, 255, 0.07) 2px 5px);
+}
+.cv-cart-label {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 5px 5px 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #ece2cb;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.cv-cart-art {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.cv-cart-art .art {
+  object-position: 50% 20%;
+}
+.cv-cart-band {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 20px;
+  padding: 3px 2px 0;
+  border-top: 3px solid transparent;
+  border-image: var(--g-flare) 1;
+  margin-top: 4px;
+  color: #3a3330;
+  font-size: 7.5px;
+}
+.cv-cart-band span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cv-cart-arrow {
+  position: absolute;
+  left: 50%;
+  bottom: 3.5%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.cv-cart-title {
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  font-family: var(--f-display);
+  font-size: 21px;
+  line-height: 1;
+  color: var(--c-paper);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}

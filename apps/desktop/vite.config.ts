@@ -9,6 +9,20 @@ function devOgProxy(): Plugin {
   return {
     name: "myndshelf-og-proxy",
     configureServer(server) {
+      server.middlewares.use("/__resolve", async (req, res) => {
+        const target = new URL(req.url ?? "", "http://x").searchParams.get("url");
+        if (!target || !/^https?:\/\//.test(target)) {
+          res.statusCode = 400;
+          return res.end();
+        }
+        try {
+          const r = await fetch(target, { headers: { "user-agent": "Mozilla/5.0 (compatible; MyndShelfBot/0.1; link preview)" }, redirect: "follow" });
+          res.end(r.url);
+        } catch {
+          res.statusCode = 502;
+          res.end();
+        }
+      });
       server.middlewares.use("/__og", async (req, res) => {
         const target = new URL(req.url ?? "", "http://x").searchParams.get("url");
         if (!target || !/^https?:\/\//.test(target)) {
