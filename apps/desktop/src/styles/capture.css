@@ -67,15 +67,23 @@
 /* ── mural ── */
 
 .masonry {
-  columns: 228px;
-  column-gap: 26px;
+  display: flex;
+  align-items: flex-start;
+}
+.masonry-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.masonry-cell {
+  min-width: 0;
 }
 
 .card {
-  display: inline-block;
+  position: relative;
+  display: block;
   width: 100%;
-  margin-bottom: 30px;
-  break-inside: avoid;
   cursor: pointer;
   animation: card-in var(--t-slow) var(--ease) backwards;
   transition: transform var(--t-base) var(--ease);
@@ -87,7 +95,6 @@
   from {
     opacity: 0;
     transform: translateY(18px) scale(0.97);
-    filter: blur(4px);
   }
 }
 .card-cap {

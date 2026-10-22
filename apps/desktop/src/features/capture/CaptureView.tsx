@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { KIND_LABELS } from "@myndshelf/core";
 import { Headline } from "../../components/Headline";
+import { Masonry } from "../../components/Masonry";
 import { captureImageFile, captureText } from "../../lib/capture";
+import type { CaptureItem } from "@myndshelf/types";
 import { useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
 import { AddBar } from "./AddBar";
@@ -9,6 +11,36 @@ import { CaptureCard } from "./CaptureCard";
 import { CaptureDetail } from "./CaptureDetail";
 import { FeedView } from "./FeedView";
 import { Viewer } from "./Viewer";
+
+/** Altura aproximada de cada capa (em larguras de coluna), para equilibrar as colunas. */
+function estimateHeight(item: CaptureItem): number {
+  if (item.status === "loading") return 0.8;
+  const caption = 0.32;
+  switch (item.kind) {
+    case "music":
+      return 0.86 + caption;
+    case "podcast":
+      return 1 + caption;
+    case "book":
+      return 1.2 + caption;
+    case "video":
+      return 0.92 + caption;
+    case "film":
+      return 0.82 + caption;
+    case "image":
+      return 1.15 + caption;
+    case "place":
+      return 0.8 + caption;
+    case "article":
+      return (item.image ? 1.25 : 0.75) + Math.min(0.4, (item.title.length / 60) * 0.2);
+    case "code":
+      return 0.75 + Math.min(0.5, ((item.description?.length ?? 0) / 140) * 0.3);
+    case "note":
+      return 0.75 + Math.min(0.6, ((item.note ?? item.title).length / 200) * 0.3);
+    default:
+      return 0.63 + caption;
+  }
+}
 
 const isEditable = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -73,13 +105,21 @@ export function CaptureView() {
       <AddBar />
 
       {items.length ? (
-        <div className="masonry">
-          {items.map((item, i) => (
-            <CaptureCard key={item.id} item={item} index={i} onOpen={() => set({ openCaptureId: item.id })}
+        <Masonry
+          items={items}
+          minColumnWidth={228}
+          gap={26}
+          estimate={estimateHeight}
+          getKey={(item) => item.id}
+          render={(item, i) => (
+            <CaptureCard
+              item={item}
+              index={i}
+              onOpen={() => set({ openCaptureId: item.id })}
               onView={() => set({ viewerCaptureId: item.id })}
             />
-          ))}
-        </div>
+          )}
+        />
       ) : (
         <div className="empty">
           <div className="empty-orbit" />
