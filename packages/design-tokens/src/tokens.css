@@ -1,0 +1,37 @@
+/* Gerado a partir de index.ts — mantenha em sincronia. */
+:root {
+  --c-void: #06050b;
+  --c-night: #0c0a15;
+  --c-nebula: #151229;
+  --c-dusk: #1f1a38;
+  --c-paper: #efe6d2;
+  --c-paper-dim: #bcb3a1;
+  --c-paper-mute: #7a7468;
+  --c-line: rgba(239, 230, 210, 0.12);
+  --c-line-strong: rgba(239, 230, 210, 0.24);
+
+  --c-cobalt: #2a4bff;
+  --c-cyan: #6fd6ff;
+  --c-sun: #fff1b8;
+  --c-amber: #ffb43d;
+  --c-ember: #ff5a24;
+  --c-magenta: #d42a6a;
+
+  --g-flare: linear-gradient(100deg, var(--c-cobalt) 0%, var(--c-cyan) 18%, var(--c-sun) 38%, var(--c-amber) 55%, var(--c-ember) 74%, var(--c-magenta) 100%);
+  --g-beam: radial-gradient(60% 80% at 50% 100%, rgba(111, 214, 255, 0.35), rgba(42, 75, 255, 0.08) 55%, transparent 75%);
+
+  --f-display: "Instrument Serif", "Times New Roman", serif;
+  --f-body: "Inter Tight Variable", "Inter Tight", system-ui, sans-serif;
+  --f-mono: "Space Mono", ui-monospace, monospace;
+
+  --r-sm: 4px;
+  --r-md: 10px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 160ms;
+  --t-base: 280ms;
+  --t-slow: 600ms;
+}

@@ -1,0 +1,17 @@
+{
+  "name": "myndshelf",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "desktop": "corepack pnpm --filter @myndshelf/desktop tauri dev",
+    "desktop:web": "corepack pnpm --filter @myndshelf/desktop dev",
+    "desktop:build": "corepack pnpm --filter @myndshelf/desktop tauri build"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.10",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.12.1"
+}

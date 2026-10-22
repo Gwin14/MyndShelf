@@ -1,0 +1,4 @@
+{
+  "extends": "@myndshelf/config/tsconfig.base.json",
+  "include": ["src"]
+}

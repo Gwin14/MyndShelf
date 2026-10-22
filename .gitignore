@@ -1,0 +1,23 @@
+node_modules
+dist
+.turbo
+target
+*.log
+.DS_Store
+
+# env
+.env
+.env.*
+!.env.example
+
+# build / test
+*.tsbuildinfo
+coverage
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# claude (local only)
+.claude/settings.local.json
