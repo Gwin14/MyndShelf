@@ -11,6 +11,7 @@ interface UiState {
   captureTag: string | null;
   captureQuery: string;
   openCaptureId: string | null;
+  viewerCaptureId: string | null;
 
   shelfView: "shelf" | "gallery";
   shelfFilter: string; // "all" | "featured" | "loose" | shelfId
@@ -30,6 +31,7 @@ export const useUi = create<UiState>((set) => ({
   captureTag: null,
   captureQuery: "",
   openCaptureId: null,
+  viewerCaptureId: null,
 
   shelfView: "shelf",
   shelfFilter: "all",

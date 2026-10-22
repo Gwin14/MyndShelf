@@ -1,18 +1,22 @@
 import { useState } from "react";
-import { ExternalLink, RefreshCw, Trash2 } from "lucide-react";
-import { KIND_LABELS, relativeDate } from "@myndshelf/core";
+import { BookOpen, Expand, ExternalLink, Play, RefreshCw, Trash2 } from "lucide-react";
+import { KIND_LABELS, relativeDate, VIEW_LABELS, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem, CaptureKind } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
 import { Modal } from "../../components/Modal";
 import { refreshCapture } from "../../lib/capture";
 import { openExternal } from "../../lib/platform";
 import { library, useLibrary } from "../../lib/store";
+import { useUi } from "../../lib/ui";
 import { Cover } from "./covers/Cover";
 
 export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const item = useLibrary((s) => s.captures.find((c) => c.id === id));
   const [tagDraft, setTagDraft] = useState("");
+  const setUi = useUi((s) => s.set);
   if (!item) return null;
+  const mode = item.status === "ready" ? viewModeOf(item) : undefined;
+  const view = () => setUi({ viewerCaptureId: item.id });
   const update = (patch: Partial<CaptureItem>) =>
     library.getState().updateCapture(id, patch);
 
@@ -20,7 +24,7 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
     <Modal onClose={onClose} wide>
       <div className="detail">
         <div className="detail-stage" data-kind={item.kind}>
-          <div className="detail-cover">
+          <div className="detail-cover" data-openable={mode ? true : undefined} onClick={mode ? view : undefined}>
             <Cover item={item} />
           </div>
         </div>
@@ -89,10 +93,16 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
           <AddToProject kind="capture" refId={item.id} />
 
           <div className="detail-actions">
+            {mode && (
+              <button className="btn btn-flare" onClick={view}>
+                {mode === "play" ? <Play size={14} fill="currentColor" /> : mode === "read" ? <BookOpen size={14} /> : <Expand size={14} />}
+                {VIEW_LABELS[mode]}
+              </button>
+            )}
             {item.url && (
               <>
-                <button className="btn btn-flare" onClick={() => openExternal(item.url!)}>
-                  <ExternalLink size={14} /> Abrir
+                <button className={`btn ${mode ? "" : "btn-flare"}`} onClick={() => openExternal(item.url!)}>
+                  <ExternalLink size={14} /> {mode ? "Original" : "Abrir"}
                 </button>
                 <button className="btn" onClick={() => refreshCapture(item.id)} title="Buscar metadados de novo">
                   <RefreshCw size={14} />

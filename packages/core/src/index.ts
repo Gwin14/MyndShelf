@@ -4,3 +4,4 @@ export * from "./enrich";
 export * from "./store";
 export * from "./media";
 export * from "./util";
+export * from "./embed";

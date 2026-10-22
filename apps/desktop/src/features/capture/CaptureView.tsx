@@ -7,13 +7,14 @@ import { useUi } from "../../lib/ui";
 import { AddBar } from "./AddBar";
 import { CaptureCard } from "./CaptureCard";
 import { CaptureDetail } from "./CaptureDetail";
+import { Viewer } from "./Viewer";
 
 const isEditable = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
 export function CaptureView() {
   const captures = useLibrary((s) => s.captures);
-  const { captureKind, captureTag, captureQuery, openCaptureId, set } = useUi();
+  const { captureKind, captureTag, captureQuery, openCaptureId, viewerCaptureId, set } = useUi();
   const [dragging, setDragging] = useState(false);
 
   const items = useMemo(() => {
@@ -71,7 +72,9 @@ export function CaptureView() {
       {items.length ? (
         <div className="masonry">
           {items.map((item, i) => (
-            <CaptureCard key={item.id} item={item} index={i} onOpen={() => set({ openCaptureId: item.id })} />
+            <CaptureCard key={item.id} item={item} index={i} onOpen={() => set({ openCaptureId: item.id })}
+              onView={() => set({ viewerCaptureId: item.id })}
+            />
           ))}
         </div>
       ) : (
@@ -84,6 +87,7 @@ export function CaptureView() {
 
       {dragging && <div className="drop-veil">Solte para guardar ✦</div>}
       {openCaptureId && <CaptureDetail id={openCaptureId} onClose={() => set({ openCaptureId: null })} />}
+      {viewerCaptureId && <Viewer id={viewerCaptureId} onClose={() => set({ viewerCaptureId: null })} />}
     </div>
   );
 }
