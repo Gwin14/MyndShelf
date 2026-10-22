@@ -18,9 +18,11 @@ import "./styles/viewer.css";
 import "./styles/feeds.css";
 import { App } from "./App";
 import { startFeedSync } from "./lib/feeds";
+import { migrate } from "./lib/migrate";
 import { seedOnce } from "./lib/seed";
 
 void seedOnce();
+void migrate();
 startFeedSync();
 
 createRoot(document.getElementById("root")!).render(

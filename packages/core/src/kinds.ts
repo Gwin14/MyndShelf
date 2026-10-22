@@ -19,6 +19,7 @@ const RULES: Rule[] = [
   { kind: "book", host: /(goodreads\.com|openlibrary\.org|skoob\.com\.br|bookshop\.org|storygraph\.com)$/ },
   { kind: "book", host: /books\.google\./ },
   { kind: "book", ogType: /^books?(\.|$)/ },
+  { kind: "book", host: /(^|\.)amazon\.[a-z.]+$/, path: /\/(dp|gp\/product)\/\d{9}[\dX](\/|$)/i },
   { kind: "book", host: /amazon\.|estantevirtual\.com\.br$/, text: /\b(livro|book|paperback|hardcover|capa (comum|dura)|kindle|ebook)\b/i },
   { kind: "video", host: /(youtube\.com|youtu\.be|vimeo\.com|twitch\.tv|tiktok\.com|nebula\.tv|dailymotion\.com)$/ },
   { kind: "video", ogType: /^video/ },

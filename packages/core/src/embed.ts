@@ -53,8 +53,9 @@ export function getEmbed(url?: string): Embed | undefined {
   if (host === "music.apple.com" || host === "podcasts.apple.com") {
     return {
       type: "audio",
-      provider: "Apple",
-      src: `https://embed.${host}${path}${u.search}`,
+      provider: host === "podcasts.apple.com" ? "Apple Podcasts" : "Apple Music",
+      // theme=dark: o player da Apple segue o tema claro do sistema por padrão
+      src: `https://embed.${host}${path}?${new URLSearchParams([...u.searchParams, ["theme", "dark"]])}`,
       height: path.includes("/song/") || u.searchParams.has("i") ? 175 : 450,
     };
   }
