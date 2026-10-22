@@ -15,10 +15,13 @@ import "./styles/covers.css";
 import "./styles/shelf.css";
 import "./styles/projects.css";
 import "./styles/viewer.css";
+import "./styles/feeds.css";
 import { App } from "./App";
+import { startFeedSync } from "./lib/feeds";
 import { seedOnce } from "./lib/seed";
 
 void seedOnce();
+startFeedSync();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

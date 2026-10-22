@@ -7,6 +7,7 @@ import { useUi } from "../../lib/ui";
 import { AddBar } from "./AddBar";
 import { CaptureCard } from "./CaptureCard";
 import { CaptureDetail } from "./CaptureDetail";
+import { FeedView } from "./FeedView";
 import { Viewer } from "./Viewer";
 
 const isEditable = (el: EventTarget | null) =>
@@ -14,7 +15,7 @@ const isEditable = (el: EventTarget | null) =>
 
 export function CaptureView() {
   const captures = useLibrary((s) => s.captures);
-  const { captureKind, captureTag, captureQuery, openCaptureId, viewerCaptureId, set } = useUi();
+  const { captureKind, captureTag, captureQuery, captureFeed, openCaptureId, viewerCaptureId, set } = useUi();
   const [dragging, setDragging] = useState(false);
 
   const items = useMemo(() => {
@@ -41,6 +42,8 @@ export function CaptureView() {
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
   }, []);
+
+  if (captureFeed) return <FeedView feedId={captureFeed} />;
 
   const filterLabel = captureKind === "all" ? "referências" : KIND_LABELS[captureKind].toLowerCase();
 
@@ -87,7 +90,9 @@ export function CaptureView() {
 
       {dragging && <div className="drop-veil">Solte para guardar ✦</div>}
       {openCaptureId && <CaptureDetail id={openCaptureId} onClose={() => set({ openCaptureId: null })} />}
-      {viewerCaptureId && <Viewer id={viewerCaptureId} onClose={() => set({ viewerCaptureId: null })} />}
+      {viewerCaptureId && (
+        <Viewer item={captures.find((c) => c.id === viewerCaptureId)} onClose={() => set({ viewerCaptureId: null })} />
+      )}
     </div>
   );
 }

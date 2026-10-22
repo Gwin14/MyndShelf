@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { BookOpen, Expand, ExternalLink, Play, RefreshCw, Trash2 } from "lucide-react";
-import { KIND_LABELS, relativeDate, VIEW_LABELS, viewModeOf } from "@myndshelf/core";
+import { BookOpen, Expand, ExternalLink, Play, Radio, RefreshCw, Trash2 } from "lucide-react";
+import { describeFeedSource, KIND_LABELS, relativeDate, VIEW_LABELS, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem, CaptureKind } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
 import { Modal } from "../../components/Modal";
 import { refreshCapture } from "../../lib/capture";
+import { subscribe } from "../../lib/feeds";
 import { openExternal } from "../../lib/platform";
 import { library, useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
@@ -14,7 +15,19 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
   const item = useLibrary((s) => s.captures.find((c) => c.id === id));
   const [tagDraft, setTagDraft] = useState("");
   const setUi = useUi((s) => s.set);
+  const [follow, setFollow] = useState<{ state: "idle" | "busy" | "error"; msg?: string }>({ state: "idle" });
   if (!item) return null;
+  const source = item.url ? describeFeedSource(item.url) : undefined;
+  const canFollow = !!item.url && !source?.unsupported && (!!source || ["article", "link", "code", "podcast", "video"].includes(item.kind));
+  const followFeed = async () => {
+    setFollow({ state: "busy" });
+    try {
+      const { id: feedId } = await subscribe(item.url!);
+      setUi({ captureFeed: feedId, openCaptureId: null });
+    } catch (e) {
+      setFollow({ state: "error", msg: e instanceof Error ? e.message : String(e) });
+    }
+  };
   const mode = item.status === "ready" ? viewModeOf(item) : undefined;
   const view = () => setUi({ viewerCaptureId: item.id });
   const update = (patch: Partial<CaptureItem>) =>
@@ -109,6 +122,11 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
                 </button>
               </>
             )}
+            {canFollow && (
+              <button className="btn" onClick={followFeed} disabled={follow.state === "busy"} title={source ? `Seguir: ${source.label}` : "Seguir o feed deste site"}>
+                <Radio size={14} /> {follow.state === "busy" ? "Sintonizando…" : "Seguir"}
+              </button>
+            )}
             <button
               className="btn btn-danger"
               onClick={() => {
@@ -119,6 +137,7 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
               <Trash2 size={14} /> Remover
             </button>
           </div>
+          {follow.state === "error" && <p className="mono feed-follow-error">⚠ {follow.msg}</p>}
         </div>
       </div>
     </Modal>

@@ -4,17 +4,30 @@ import type {
   BoardNode,
   CaptureItem,
   Creation,
+  Feed,
+  FeedEntry,
   LibraryData,
   Project,
   Shelf,
   Viewport,
 } from "@myndshelf/types";
+import type { ParsedEntry } from "./feed";
 import { hueFrom, uid } from "./util";
+
+const MAX_ENTRIES_PER_FEED = 150;
 
 export interface LibraryActions {
   addCapture(input: Partial<CaptureItem> & { title: string }): string;
   updateCapture(id: string, patch: Partial<CaptureItem>): void;
   removeCapture(id: string): void;
+
+  addFeed(input: Omit<Feed, "id" | "createdAt" | "hue">): string;
+  updateFeed(id: string, patch: Partial<Feed>): void;
+  removeFeed(id: string): void;
+  /** Funde entradas novas mantendo lidas/salvas; na 1ª vez só as mais recentes ficam como novas. */
+  mergeEntries(feedId: string, entries: ParsedEntry[], firstFetch?: boolean): number;
+  updateEntry(id: string, patch: Partial<FeedEntry>): void;
+  markFeedRead(feedId: string | null): void;
 
   addCreation(input: Partial<Creation> & Pick<Creation, "title" | "medium">): string;
   updateCreation(id: string, patch: Partial<Creation>): void;
@@ -37,7 +50,7 @@ export interface LibraryActions {
 
 export type LibraryState = LibraryData & LibraryActions;
 
-const empty: LibraryData = { captures: [], creations: [], shelves: [], projects: [] };
+const empty: LibraryData = { captures: [], feeds: [], feedEntries: [], creations: [], shelves: [], projects: [] };
 
 /**
  * Store do domínio, agnóstico de plataforma.
@@ -89,6 +102,57 @@ export function createLibraryStore(storage: StateStorage, name = "myndshelf-libr
           removeCapture(id) {
             set((s) => ({ captures: s.captures.filter((c) => c.id !== id) }));
             dropRefs(id);
+          },
+
+          addFeed(input) {
+            const existing = get().feeds.find((f) => f.url === input.url);
+            if (existing) return existing.id;
+            const feed: Feed = { ...input, id: uid(), hue: hueFrom(input.url), createdAt: Date.now() };
+            set((s) => ({ feeds: [...s.feeds, feed] }));
+            return feed.id;
+          },
+          updateFeed(id, patch) {
+            set((s) => ({ feeds: s.feeds.map((f) => (f.id === id ? { ...f, ...patch } : f)) }));
+          },
+          removeFeed(id) {
+            set((s) => ({ feeds: s.feeds.filter((f) => f.id !== id), feedEntries: s.feedEntries.filter((e) => e.feedId !== id) }));
+          },
+          mergeEntries(feedId, entries, firstFetch) {
+            const known = new Map(get().feedEntries.filter((e) => e.feedId === feedId).map((e) => [e.id, e]));
+            let fresh = 0;
+            const incoming = [...entries]
+              .sort((a, b) => b.publishedAt - a.publishedAt)
+              .map((p, i): FeedEntry => {
+                const id = `${feedId}:${p.guid}`;
+                const prev = known.get(id);
+                if (!prev) fresh++;
+                return {
+                  id,
+                  feedId,
+                  title: p.title,
+                  url: p.url,
+                  summary: p.summary,
+                  image: p.image,
+                  author: p.author,
+                  publishedAt: p.publishedAt,
+                  read: prev ? prev.read : !!firstFetch && i >= 10,
+                  savedAs: prev?.savedAs,
+                };
+              });
+            const ids = new Set(incoming.map((e) => e.id));
+            const kept = [...incoming, ...[...known.values()].filter((e) => !ids.has(e.id))]
+              .sort((a, b) => b.publishedAt - a.publishedAt)
+              .slice(0, MAX_ENTRIES_PER_FEED);
+            set((s) => ({ feedEntries: [...s.feedEntries.filter((e) => e.feedId !== feedId), ...kept] }));
+            return fresh;
+          },
+          updateEntry(id, patch) {
+            set((s) => ({ feedEntries: s.feedEntries.map((e) => (e.id === id ? { ...e, ...patch } : e)) }));
+          },
+          markFeedRead(feedId) {
+            set((s) => ({
+              feedEntries: s.feedEntries.map((e) => (!feedId || e.feedId === feedId ? { ...e, read: true } : e)),
+            }));
           },
 
           addCreation(input) {
@@ -181,7 +245,7 @@ export function createLibraryStore(storage: StateStorage, name = "myndshelf-libr
         name,
         version: 1,
         storage: createJSONStorage(() => storage),
-        partialize: ({ captures, creations, shelves, projects }) => ({ captures, creations, shelves, projects }),
+        partialize: ({ captures, feeds, feedEntries, creations, shelves, projects }) => ({ captures, feeds, feedEntries, creations, shelves, projects }),
       },
     ),
   );

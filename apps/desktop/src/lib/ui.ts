@@ -10,6 +10,8 @@ interface UiState {
   captureKind: CaptureKind | "all";
   captureTag: string | null;
   captureQuery: string;
+  /** null = mural; "all" = todas as transmissões; senão, id do feed */
+  captureFeed: string | null;
   openCaptureId: string | null;
   viewerCaptureId: string | null;
 
@@ -30,6 +32,7 @@ export const useUi = create<UiState>((set) => ({
   captureKind: "all",
   captureTag: null,
   captureQuery: "",
+  captureFeed: null,
   openCaptureId: null,
   viewerCaptureId: null,
 

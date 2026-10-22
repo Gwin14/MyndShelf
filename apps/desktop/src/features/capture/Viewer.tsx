@@ -5,12 +5,10 @@ import { getEmbed, hostOf, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
 import { openExternal } from "../../lib/platform";
 import { loadArticle, type Article } from "../../lib/reader";
-import { useLibrary } from "../../lib/store";
 import { Cover } from "./covers/Cover";
 
 /** Abre o conteúdo do item dentro do app: player, leitor ou imagem em tela cheia. */
-export function Viewer({ id, onClose }: { id: string; onClose: () => void }) {
-  const item = useLibrary((s) => s.captures.find((c) => c.id === id));
+export function Viewer({ item, onClose }: { item: CaptureItem | undefined; onClose: () => void }) {
 
   // Esc fecha só o viewer (e não o detalhe que está por baixo)
   useEffect(() => {

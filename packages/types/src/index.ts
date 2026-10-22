@@ -46,6 +46,37 @@ export interface CaptureItem {
   createdAt: number;
 }
 
+/* ───────────────────────────── Feeds ─────────────────────────────── */
+
+export interface Feed {
+  id: string;
+  /** URL do RSS/Atom */
+  url: string;
+  siteUrl?: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  hue: number;
+  lastFetched?: number;
+  error?: string;
+  createdAt: number;
+}
+
+export interface FeedEntry {
+  /** feedId + guid — estável entre atualizações */
+  id: string;
+  feedId: string;
+  title: string;
+  url?: string;
+  summary?: string;
+  image?: string;
+  author?: string;
+  publishedAt: number;
+  read: boolean;
+  /** id da captura criada a partir desta entrada */
+  savedAs?: string;
+}
+
 /* ───────────────────────────── Estante ───────────────────────────── */
 
 export type CreationMedium = "image" | "document" | "audio" | "video" | "text" | "object";
@@ -119,6 +150,8 @@ export interface Project {
 
 export interface LibraryData {
   captures: CaptureItem[];
+  feeds: Feed[];
+  feedEntries: FeedEntry[];
   creations: Creation[];
   shelves: Shelf[];
   projects: Project[];

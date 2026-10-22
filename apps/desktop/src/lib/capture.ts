@@ -1,21 +1,32 @@
-import { enrichLink, isProbablyUrl, normalizeUrl } from "@myndshelf/core";
+import { enrichLink, isProbablyUrl, looksLikeFeedUrl, normalizeUrl } from "@myndshelf/core";
 import { fetchHtml } from "./platform";
 import { library } from "./store";
 import { downscaleImage } from "./files";
+import { subscribe } from "./feeds";
+import { useUi } from "./ui";
 
 /** Captura texto livre: vira link (com OpenGraph) ou nota. */
-export async function captureText(input: string) {
+export async function captureText(input: string): Promise<string | undefined> {
   const text = input.trim();
   if (!text) return;
   const { addCapture, updateCapture } = library.getState();
 
   if (!isProbablyUrl(text)) {
     const firstLine = text.split("\n")[0].slice(0, 80);
-    addCapture({ kind: "note", title: firstLine, note: text });
-    return;
+    return addCapture({ kind: "note", title: firstLine, note: text });
   }
 
   const url = normalizeUrl(text);
+  // endereço de feed colado na barra → vira assinatura, não captura
+  if (looksLikeFeedUrl(url)) {
+    try {
+      const { id: feedId } = await subscribe(url);
+      useUi.getState().set({ captureFeed: feedId });
+      return;
+    } catch {
+      /* não era feed afinal — segue como link comum */
+    }
+  }
   const id = addCapture({ kind: "link", url, title: url, status: "loading" });
   try {
     const data = await enrichLink(url, fetchHtml);
@@ -23,6 +34,7 @@ export async function captureText(input: string) {
   } catch {
     updateCapture(id, { status: "error" });
   }
+  return id;
 }
 
 export async function captureImageFile(file: File) {

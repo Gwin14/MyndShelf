@@ -1,0 +1,217 @@
+/* ── sidebar ── */
+.feed-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  object-fit: cover;
+  filter: saturate(0.7);
+}
+.side-item[data-active] .feed-icon {
+  filter: none;
+}
+.feed-dead {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-ember);
+  box-shadow: 0 0 6px var(--c-ember);
+}
+.feed-add {
+  padding-top: 2px;
+}
+.feed-add-error {
+  color: var(--c-ember);
+}
+
+/* ── cabeçalho do feed ── */
+.feed-stage .headline-title {
+  max-width: 760px;
+}
+.feed-actions {
+  display: flex;
+  gap: 6px;
+}
+.feed-actions .btn {
+  height: 32px;
+  padding: 0 11px;
+}
+.feed-actions .btn[aria-pressed="true"] {
+  border-color: var(--c-amber);
+  color: var(--c-amber);
+}
+.feed-actions .btn[data-spinning] svg {
+  animation: spin 0.9s linear infinite;
+}
+.feed-desc {
+  max-width: 640px;
+  margin: -14px 0 26px;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--c-paper-dim);
+}
+.feed-error {
+  margin: -10px 0 24px;
+  color: var(--c-ember);
+}
+
+/* ── transmissões ── */
+.tx-day {
+  max-width: 900px;
+  margin-bottom: 18px;
+}
+.tx-day-label {
+  margin: 0 0 4px;
+  padding: 10px 0 8px;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 22px;
+  color: var(--c-paper-dim);
+  border-bottom: 1px solid var(--c-line);
+}
+.tx {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 16px;
+  padding: 18px 12px 18px 6px;
+  border-bottom: 1px dashed var(--c-line);
+  border-radius: 6px;
+  cursor: pointer;
+  animation: card-in var(--t-slow) var(--ease) backwards;
+  transition: background var(--t-fast);
+}
+.tx:hover {
+  background: linear-gradient(90deg, hsl(var(--hue) 80% 60% / 0.07), transparent 70%);
+}
+/* sinal: estrela acesa = não lida */
+.tx-signal {
+  width: 7px;
+  height: 7px;
+  margin: 9px 0 0 6px;
+  border-radius: 50%;
+  background: var(--c-amber);
+  box-shadow: 0 0 0 3px rgba(255, 180, 61, 0.15), 0 0 12px var(--c-amber);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+.tx[data-read] .tx-signal {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--c-line-strong);
+  animation: none;
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 180, 61, 0.05), 0 0 18px var(--c-amber);
+  }
+}
+.tx-body {
+  min-width: 0;
+}
+.tx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0 0 6px;
+  color: var(--c-paper-mute);
+  font-size: 9.5px;
+}
+.tx-source {
+  color: hsl(var(--hue) 85% 72%);
+}
+.tx-title {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 25px;
+  line-height: 1.08;
+  letter-spacing: -0.005em;
+}
+.tx[data-read] .tx-title {
+  color: var(--c-paper-dim);
+}
+.tx-summary {
+  margin: 8px 0 0;
+  max-width: 620px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--c-paper-mute);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tx-actions {
+  display: flex;
+  gap: 6px;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--t-fast), height var(--t-base) var(--ease), margin var(--t-base) var(--ease);
+}
+.tx:hover .tx-actions {
+  height: 26px;
+  margin-top: 12px;
+  opacity: 1;
+}
+.tx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-line-strong);
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.tx-btn:hover:not(:disabled) {
+  background: var(--c-amber);
+  border-color: var(--c-amber);
+  color: var(--c-void);
+}
+.tx-btn[data-saved] {
+  border-color: transparent;
+  color: var(--c-amber);
+  cursor: default;
+}
+.tx-thumb {
+  width: 132px;
+  height: 92px;
+  padding: 5px;
+  background: #ece2cb;
+  border-radius: 2px;
+  box-shadow: 0 14px 22px -12px #000;
+  transform: rotate(1.2deg);
+  transition: transform var(--t-base) var(--spring);
+}
+.tx:hover .tx-thumb {
+  transform: rotate(0deg) scale(1.03);
+}
+.tx[data-read] .tx-thumb {
+  filter: saturate(0.6) brightness(0.85);
+}
+.tx-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-hint {
+  margin: 6px 8px 0;
+  font-size: 9.5px;
+  color: var(--c-amber);
+  animation: fade-in var(--t-base) var(--ease);
+}
+.feed-hint[data-unsupported] {
+  color: var(--c-ember);
+}
+.feed-follow-error {
+  margin: 12px 0 0;
+  color: var(--c-ember);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}

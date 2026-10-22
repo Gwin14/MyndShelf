@@ -7,7 +7,7 @@ Estética *Vintage Cosmic Dreamscape*: céu granulado, labaredas solares, tipogr
 
 | | Seção | O que faz |
 |---|---|---|
-| I | **Captura** | Clone do mymind. Cole links, solte imagens ou escreva notas. O core lê OpenGraph, detecta o tipo e gera uma capa temática: disco de vinil (música), livro (livro), TV de tubo (vídeo), película 35mm (filme), recorte de revista (leitura), terminal (código), cartão-postal (lugar), ficha de biblioteca (nota)… |
+| I | **Captura** | Clone do mymind. Cole links, solte imagens ou escreva notas. O core lê OpenGraph, detecta o tipo e gera uma capa temática: disco de vinil (música), livro (livro), TV de tubo (vídeo), película 35mm (filme), recorte de revista (leitura), terminal (código), cartão-postal (lugar), ficha de biblioteca (nota)… Itens com conteúdo abrem dentro do app (player de vídeo/música, leitor de artigos). **Transmissões**: siga feeds RSS/Atom (blogs, revistas, canais do YouTube, podcasts) — cole qualquer link — site, canal do YouTube, subreddit, repo do GitHub, perfil do Bluesky/Mastodon/Letterboxd, podcast da Apple, SoundCloud… — e o feed é encontrado sozinho (regras em `packages/core/src/feedResolve.ts`); as novidades aparecem por dia e podem ser lidas, tocadas ou guardadas como captura. |
 | II | **Estante** | Suas criações como objetos físicos — contra as “não-coisas”. Imagem → quadro, documento → livro, áudio → fita cassete, vídeo → VHS, texto → manuscrito, outros → redoma. Estantes nomeadas, vitrine com destaque e galeria com etiquetas de museu. |
 | III | **Projetos** | Moodboards num quadro infinito: arraste itens da Captura e da Estante, crie notas, ligue itens arrastando o ✦ da borda. Pan com arrastar/roda, zoom com ⌘+roda ou pinça. |
 
