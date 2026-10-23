@@ -6,13 +6,14 @@ import { Headline } from "../../components/Headline";
 import { addCreationsFromFiles, addFolderFromEntry, pickFiles } from "../../lib/files";
 import { useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
-import { CreationDetail } from "./CreationDetail";
 import { ShelfObject } from "./ShelfObject";
+import { menu } from "../../lib/contextMenu";
+import { creationMenu } from "../../lib/menus";
 
 export function ShelfView() {
   const creations = useLibrary((s) => s.creations);
   const shelves = useLibrary((s) => s.shelves);
-  const { shelfView, shelfFilter, shelfMedium, openCreationId, set } = useUi();
+  const { shelfView, shelfFilter, shelfMedium, set } = useUi();
   const [dragging, setDragging] = useState(false);
   const nativeDrag = useUi((s) => s.nativeDrag);
 
@@ -102,7 +103,7 @@ export function ShelfView() {
           <p className="kicker vitrine-kicker">✦ Vitrine</p>
           <div className="vitrine-items">
             {featured.map((c) => (
-              <button key={c.id} className="vitrine-item" onClick={() => open(c.id)}>
+              <button key={c.id} className="vitrine-item" onClick={() => open(c.id)} onContextMenu={menu(() => creationMenu(c))}>
                 <ShelfObject item={c} />
                 <span className="placard">
                   <em>{c.title}</em>
@@ -128,6 +129,7 @@ export function ShelfView() {
                   key={c.id}
                   className="shelf-item"
                   onClick={() => open(c.id)}
+                  onContextMenu={menu(() => creationMenu(c))}
                   style={{ "--lean": `${((c.hue % 7) - 3) * 0.6}deg`, animationDelay: `${i * 40}ms` } as React.CSSProperties}
                 >
                   <ShelfObject item={c} />
@@ -142,7 +144,7 @@ export function ShelfView() {
       {shelfView === "gallery" && visible.length > 0 && (
         <div className="gallery">
           {visible.map((c, i) => (
-            <button key={c.id} className="gallery-item" onClick={() => open(c.id)} style={{ animationDelay: `${Math.min(i, 16) * 30}ms` }}>
+            <button key={c.id} className="gallery-item" onClick={() => open(c.id)} onContextMenu={menu(() => creationMenu(c))} style={{ animationDelay: `${Math.min(i, 16) * 30}ms` }}>
               <div className="gallery-wall">
                 <ShelfObject item={c} />
               </div>
@@ -159,7 +161,6 @@ export function ShelfView() {
       )}
 
       {(dragging || nativeDrag) && <div className="drop-veil">Solte para pôr na estante ✦</div>}
-      {openCreationId && <CreationDetail id={openCreationId} onClose={() => set({ openCreationId: null })} />}
     </div>
   );
 }

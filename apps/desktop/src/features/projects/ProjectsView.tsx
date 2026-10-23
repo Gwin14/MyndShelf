@@ -5,6 +5,8 @@ import { Headline } from "../../components/Headline";
 import { library, useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
 import { Board } from "./Board";
+import { menu } from "../../lib/contextMenu";
+import { projectMenu } from "../../lib/menus";
 
 export function ProjectsView() {
   const projects = useLibrary((s) => s.projects);
@@ -53,6 +55,7 @@ export function ProjectsView() {
               className="constellation"
               style={{ animationDelay: `${i * 50}ms`, "--hue": p.hue } as React.CSSProperties}
               onClick={() => set({ activeProjectId: p.id })}
+              onContextMenu={menu(() => projectMenu(p.id))}
             >
               <ConstellationMap project={p} />
               <div className="constellation-info">

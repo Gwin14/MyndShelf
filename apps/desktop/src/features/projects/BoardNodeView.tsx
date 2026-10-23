@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { BoardNode } from "@myndshelf/types";
 import { library, useLibrary } from "../../lib/store";
+import { menu, type MaybeEntry } from "../../lib/contextMenu";
+import { Pencil } from "lucide-react";
 import { Cover, SELF_CAPTIONED } from "../capture/covers/Cover";
 import { ShelfObject } from "../shelf/ShelfObject";
 
@@ -15,9 +17,11 @@ interface Props {
   onPointerDown(e: React.PointerEvent): void;
   onPortDown(e: React.PointerEvent): void;
   onMeasure(w: number, h: number): void;
+  /** ações do quadro para este nó (o "Editar texto" das notas é adicionado aqui) */
+  menuEntries(): MaybeEntry[];
 }
 
-export function BoardNodeView({ node, position, dragging, selected, linking, projectId, onPointerDown, onPortDown, onMeasure }: Props) {
+export function BoardNodeView({ node, position, dragging, selected, linking, projectId, onPointerDown, onPortDown, onMeasure, menuEntries }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const capture = useLibrary((s) => (node.kind === "capture" ? s.captures.find((c) => c.id === node.refId) : undefined));
   const creation = useLibrary((s) => (node.kind === "creation" ? s.creations.find((c) => c.id === node.refId) : undefined));
@@ -45,6 +49,12 @@ export function BoardNodeView({ node, position, dragging, selected, linking, pro
       style={{ left: position.x, top: position.y, width: node.w, "--rot": `${node.rotation}deg` } as React.CSSProperties}
       onPointerDown={editing ? (e) => e.stopPropagation() : onPointerDown}
       onDoubleClick={() => node.kind === "text" && setEditing(true)}
+      onContextMenu={menu(() => {
+        const [heading, ...rest] = menuEntries();
+        return node.kind === "text"
+          ? [heading, { label: "Editar texto", icon: <Pencil size={14} />, onSelect: () => setEditing(true) }, ...rest]
+          : [heading, ...rest];
+      })}
     >
       <div className="bn-body">
         {capture && (

@@ -9,6 +9,8 @@ import { openExternal } from "../../lib/platform";
 import { library, useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
 import { Viewer } from "./Viewer";
+import { menu } from "../../lib/contextMenu";
+import { feedEntryMenu } from "../../lib/menus";
 
 /** Cada feed ganha uma "frequência" estável, como uma estação de rádio. */
 export const frequencyOf = (hue: number) => (88 + (hue / 360) * 20).toFixed(1);
@@ -182,6 +184,7 @@ function Transmission({
       data-read={entry.read || undefined}
       style={{ "--hue": feed?.hue ?? 30, animationDelay: `${Math.min(index, 12) * 30}ms` } as CSSProperties}
       onClick={onOpen}
+      onContextMenu={menu(() => feedEntryMenu(entry, feed, onOpen))}
     >
       <span className="tx-signal" aria-label={entry.read ? undefined : "nova"} />
       <div className="tx-body">

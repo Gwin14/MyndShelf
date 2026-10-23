@@ -6,6 +6,8 @@ import { SideItem, SideSection } from "../../components/SideSection";
 import { subscribe } from "../../lib/feeds";
 import { useLibrary } from "../../lib/store";
 import { FeedIcon } from "./FeedIcon";
+import { menu } from "../../lib/contextMenu";
+import { feedMenu } from "../../lib/menus";
 import { useUi } from "../../lib/ui";
 import { KIND_ICONS } from "./kindIcons";
 
@@ -116,6 +118,7 @@ export function CaptureSidebar() {
             count={unreadBy.get(f.id) || undefined}
             active={captureFeed === f.id}
             onClick={() => set({ captureFeed: f.id })}
+            onContextMenu={menu(() => feedMenu(f))}
           >
             {f.error && <span className="feed-dead" title={f.error} />}
           </SideItem>

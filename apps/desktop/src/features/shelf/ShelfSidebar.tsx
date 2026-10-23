@@ -6,6 +6,8 @@ import { SideItem, SideSection } from "../../components/SideSection";
 import { addCreationsFromFiles, pickFiles } from "../../lib/files";
 import { library, useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
+import { menu } from "../../lib/contextMenu";
+import { shelfMenu } from "../../lib/menus";
 
 const MEDIUM_ICONS: Record<CreationMedium, React.JSX.Element> = {
   image: <Image size={15} />,
@@ -76,7 +78,7 @@ export function ShelfSidebar() {
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
             />
           ) : (
-            <div key={s.id} onDoubleClick={() => setRenaming(s.id)}>
+            <div key={s.id} onDoubleClick={() => setRenaming(s.id)} onContextMenu={menu(() => shelfMenu(s, () => setRenaming(s.id)))}>
               <SideItem
                 icon={<span className="shelf-glyph" />}
                 label={s.name}

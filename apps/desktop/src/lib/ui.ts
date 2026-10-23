@@ -19,6 +19,8 @@ interface UiState {
   shelfFilter: string; // "all" | "featured" | "loose" | shelfId
   shelfMedium: CreationMedium | "all";
   openCreationId: string | null;
+  /** documento da Estante aberto no visualizador */
+  readingCreationId: string | null;
 
   activeProjectId: string | null;
 
@@ -43,6 +45,7 @@ export const useUi = create<UiState>((set) => ({
   shelfFilter: "all",
   shelfMedium: "all",
   openCreationId: null,
+  readingCreationId: null,
 
   activeProjectId: null,
 

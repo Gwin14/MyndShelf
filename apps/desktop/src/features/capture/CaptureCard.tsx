@@ -1,6 +1,8 @@
 import { BookOpen, Expand, MapPin, Play } from "lucide-react";
 import { VIEW_LABELS, viewModeOf, type ViewMode } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
+import { menu } from "../../lib/contextMenu";
+import { captureMenu } from "../../lib/menus";
 import { Cover, SELF_CAPTIONED } from "./covers/Cover";
 
 const VIEW_ICONS: Record<ViewMode, React.JSX.Element> = {
@@ -28,6 +30,7 @@ export function CaptureCard({
       data-kind={item.kind}
       style={{ animationDelay: `${Math.min(index, 16) * 35}ms` }}
       onClick={onOpen}
+      onContextMenu={menu(() => captureMenu(item))}
     >
       {mode && (
         <button

@@ -5,6 +5,9 @@ import { placeNode } from "../../lib/board";
 import { library, useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
 import { DND_TYPE } from "./Board";
+import { menu } from "../../lib/contextMenu";
+import { projectMenu } from "../../lib/menus";
+import { Plus as PlusIcon } from "lucide-react";
 
 export function ProjectsSidebar() {
   const projects = useLibrary((s) => s.projects);
@@ -53,7 +56,7 @@ export function ProjectsSidebar() {
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
             />
           ) : (
-            <div key={p.id} onDoubleClick={() => setRenaming(p.id)}>
+            <div key={p.id} onDoubleClick={() => setRenaming(p.id)} onContextMenu={menu(() => projectMenu(p.id, () => setRenaming(p.id)))}>
               <SideItem
                 icon={<span className="planet" style={{ "--hue": p.hue } as React.CSSProperties} />}
                 label={p.name}
@@ -106,6 +109,14 @@ export function ProjectsSidebar() {
                   e.dataTransfer.effectAllowed = "copy";
                 }}
                 onClick={() => placeNode(activeId, source, x.id)}
+                onContextMenu={menu(() => [
+                  { heading: x.title },
+                  { label: "Adicionar ao quadro", icon: <PlusIcon size={14} />, onSelect: () => placeNode(activeId, source, x.id) },
+                  {
+                    label: "Abrir detalhes",
+                    onSelect: () => set(source === "capture" ? { openCaptureId: x.id } : { openCreationId: x.id }),
+                  },
+                ])}
               >
                 <span className="pool-thumb" style={{ "--hue": x.hue } as React.CSSProperties}>
                   {x.thumb && <img src={x.thumb} alt="" referrerPolicy="no-referrer" draggable={false} />}

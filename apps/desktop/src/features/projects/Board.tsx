@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { Maximize, Minus, Plus, StickyNote, X } from "lucide-react";
+import { BookOpen, Copy, ExternalLink, Link2, Maximize, Minus, PanelRight, Plus, RotateCcw, Shuffle, StickyNote, Trash2, Unlink, X } from "lucide-react";
+import { VIEW_LABELS, viewModeOf } from "@myndshelf/core";
 import type { BoardNode, Project, Viewport } from "@myndshelf/types";
 import { NODE_WIDTH, placeNode } from "../../lib/board";
 import { library } from "../../lib/store";
+import { menu, sep, type MaybeEntry } from "../../lib/contextMenu";
+import { docKindOf, docLabel } from "../../lib/documents";
+import { openExternal } from "../../lib/platform";
+import { useUi } from "../../lib/ui";
 import { BoardNodeView } from "./BoardNodeView";
 
 export const DND_TYPE = "application/x-myndshelf";
@@ -81,6 +86,7 @@ export function Board({ project }: { project: Project }) {
   /* ── interação ── */
 
   const onBackgroundDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return; // botão direito abre o menu, não arrasta a câmera
     if (e.target !== e.currentTarget && !(e.target as HTMLElement).classList.contains("board-layer")) return;
     setSelected(null);
     setPanning(true);
@@ -159,6 +165,97 @@ export function Board({ project }: { project: Project }) {
     setVp({ zoom, x: (r.width - (maxX - minX) * zoom) / 2 - minX * zoom, y: (r.height - (maxY - minY) * zoom) / 2 - minY * zoom + 30 });
   };
 
+  /* ── menus de clique direito ── */
+
+  const s = () => library.getState();
+  const nodeLabel = (n: BoardNode) =>
+    (n.kind === "capture"
+      ? s().captures.find((c) => c.id === n.refId)?.title
+      : n.kind === "creation"
+        ? s().creations.find((c) => c.id === n.refId)?.title
+        : n.text?.split("\n")[0]) || "Nota";
+
+  const nodeMenu = (node: BoardNode): MaybeEntry[] => {
+    const capture = node.kind === "capture" ? s().captures.find((c) => c.id === node.refId) : undefined;
+    const creation = node.kind === "creation" ? s().creations.find((c) => c.id === node.refId) : undefined;
+    const mode = capture ? viewModeOf(capture) : undefined;
+    const doc = creation ? docKindOf(creation) : undefined;
+    const edges = project.edges.filter((e) => e.from === node.id || e.to === node.id);
+    const linked = new Set(edges.flatMap((e) => [e.from, e.to]));
+    const others = project.nodes.filter((n) => n.id !== node.id);
+    return [
+      { heading: nodeLabel(node) },
+      capture && { label: "Abrir detalhes", icon: <PanelRight size={14} />, onSelect: () => useUi.getState().set({ openCaptureId: capture.id }) },
+      capture && mode && { label: VIEW_LABELS[mode], icon: <BookOpen size={14} />, onSelect: () => useUi.getState().set({ viewerCaptureId: capture.id }) },
+      capture?.url && { label: "Abrir original", icon: <ExternalLink size={14} />, onSelect: () => void openExternal(capture.url!) },
+      creation && { label: "Abrir detalhes", icon: <PanelRight size={14} />, onSelect: () => useUi.getState().set({ openCreationId: creation.id }) },
+      creation && doc && { label: `Abrir ${docLabel(doc, creation.fileName)}`, icon: <BookOpen size={14} />, onSelect: () => useUi.getState().set({ readingCreationId: creation.id }) },
+      sep,
+      others.length > 0 && {
+        label: "Ligar a",
+        icon: <Link2 size={14} />,
+        children: others.slice(0, 20).map((n) => ({
+          label: nodeLabel(n),
+          checked: linked.has(n.id),
+          onSelect: () => s().connect(project.id, node.id, n.id),
+        })),
+      },
+      edges.length > 0 && {
+        label: "Desfazer ligações",
+        icon: <Unlink size={14} />,
+        hint: String(edges.length),
+        onSelect: () => edges.forEach((e) => s().disconnect(project.id, e.id)),
+      },
+      sep,
+      { label: "Endireitar", icon: <RotateCcw size={14} />, disabled: node.rotation === 0, onSelect: () => s().updateNode(project.id, node.id, { rotation: 0 }) },
+      {
+        label: "Inclinar",
+        icon: <Shuffle size={14} />,
+        onSelect: () => s().updateNode(project.id, node.id, { rotation: Math.round((Math.random() - 0.5) * 12 * 10) / 10 }),
+      },
+      {
+        label: "Duplicar",
+        icon: <Copy size={14} />,
+        onSelect: () => {
+          const id = s().addNode(project.id, { kind: node.kind, refId: node.refId, text: node.text, w: node.w, x: node.x + 36, y: node.y + 36 });
+          setSelected(id);
+        },
+      },
+      sep,
+      { label: "Tirar do quadro", icon: <Trash2 size={14} />, danger: true, onSelect: () => s().removeNode(project.id, node.id) },
+    ];
+  };
+
+  /** Clique direito no fundo: criar ali mesmo, onde o mouse está. */
+  const backgroundMenu = (e: React.MouseEvent) => {
+    const t = e.target as HTMLElement;
+    if (t !== e.currentTarget && !t.classList.contains("board-layer")) return;
+    const p = toWorld(e.clientX, e.clientY);
+    const at = (kind: "capture" | "creation" | "text", refId?: string) => {
+      const w = NODE_WIDTH[kind];
+      const id = s().addNode(project.id, { kind, refId, text: kind === "text" ? "" : undefined, w, x: p.x - w / 2, y: p.y - 40 });
+      setSelected(id);
+    };
+    const recentCaptures = s().captures.filter((c) => c.status === "ready").slice(0, 10);
+    const recentCreations = s().creations.slice(0, 10);
+    menu(() => [
+      { label: "Nova nota aqui", icon: <StickyNote size={14} />, onSelect: () => at("text") },
+      recentCaptures.length > 0 && {
+        label: "Trazer da Captura",
+        icon: <Plus size={14} />,
+        children: recentCaptures.map((c) => ({ label: c.title, onSelect: () => at("capture", c.id) })),
+      },
+      recentCreations.length > 0 && {
+        label: "Trazer da Estante",
+        icon: <Plus size={14} />,
+        children: recentCreations.map((c) => ({ label: c.title, onSelect: () => at("creation", c.id) })),
+      },
+      sep,
+      { label: "Enquadrar tudo", icon: <Maximize size={14} />, disabled: !project.nodes.length, onSelect: fit },
+      { label: "Zoom 100%", hint: `${Math.round(vp.zoom * 100)}%`, onSelect: () => setVp((v) => ({ ...v, zoom: 1 })) },
+    ])(e);
+  };
+
   /* ── geometria ── */
 
   const pos = (n: BoardNode) => (drag?.id === n.id ? { x: drag.x, y: drag.y } : { x: n.x, y: n.y });
@@ -184,6 +281,7 @@ export function Board({ project }: { project: Project }) {
       data-panning={panning || undefined}
       style={{ backgroundSize: `${gridSize}px ${gridSize}px`, backgroundPosition: `${vp.x}px ${vp.y}px` }}
       onPointerDown={onBackgroundDown}
+      onContextMenu={backgroundMenu}
       onDragOver={(e) => e.dataTransfer.types.includes(DND_TYPE) && e.preventDefault()}
       onDrop={onDrop}
     >
@@ -221,6 +319,10 @@ export function Board({ project }: { project: Project }) {
                     e.stopPropagation();
                     setSelected(edge.id);
                   }}
+                  onContextMenu={menu(() => [
+                    { heading: `${nodeLabel(project.nodes.find((n) => n.id === edge.from)!)} ↔ ${nodeLabel(project.nodes.find((n) => n.id === edge.to)!)}` },
+                    { label: "Remover ligação", icon: <Unlink size={14} />, danger: true, onSelect: () => s().disconnect(project.id, edge.id) },
+                  ])}
                 />
                 <circle cx={a.x} cy={a.y} r={3} fill="var(--c-cyan)" />
                 <circle cx={b.x} cy={b.y} r={3} fill="var(--c-ember)" />
@@ -266,6 +368,7 @@ export function Board({ project }: { project: Project }) {
             projectId={project.id}
             onPointerDown={(e) => onNodeDown(e, node)}
             onPortDown={(e) => onPortDown(e, node)}
+            menuEntries={() => nodeMenu(node)}
             onMeasure={(w, h) => {
               const prev = sizes.current.get(node.id);
               if (prev?.h !== h || prev?.w !== w) {

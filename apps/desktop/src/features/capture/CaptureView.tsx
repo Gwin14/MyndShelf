@@ -8,9 +8,7 @@ import { useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
 import { AddBar } from "./AddBar";
 import { CaptureCard } from "./CaptureCard";
-import { CaptureDetail } from "./CaptureDetail";
 import { FeedView } from "./FeedView";
-import { Viewer } from "./Viewer";
 
 /** Altura aproximada de cada capa (em larguras de coluna), para equilibrar as colunas. */
 function estimateHeight(item: CaptureItem): number {
@@ -51,7 +49,7 @@ const isEditable = (el: EventTarget | null) =>
 
 export function CaptureView() {
   const captures = useLibrary((s) => s.captures);
-  const { captureKind, captureTag, captureQuery, captureFeed, openCaptureId, viewerCaptureId, set } = useUi();
+  const { captureKind, captureTag, captureQuery, captureFeed, set } = useUi();
   const [dragging, setDragging] = useState(false);
   const nativeDrag = useUi((s) => s.nativeDrag);
 
@@ -134,10 +132,6 @@ export function CaptureView() {
       )}
 
       {(dragging || nativeDrag) && <div className="drop-veil">Solte para guardar ✦</div>}
-      {openCaptureId && <CaptureDetail id={openCaptureId} onClose={() => set({ openCaptureId: null })} />}
-      {viewerCaptureId && (
-        <Viewer item={captures.find((c) => c.id === viewerCaptureId)} onClose={() => set({ viewerCaptureId: null })} />
-      )}
     </div>
   );
 }

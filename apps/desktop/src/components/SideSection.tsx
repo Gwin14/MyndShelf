@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 export function SideSection({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
@@ -19,6 +19,7 @@ export function SideItem({
   label,
   count,
   children,
+  onContextMenu,
 }: {
   active?: boolean;
   onClick?: () => void;
@@ -26,9 +27,17 @@ export function SideItem({
   label: ReactNode;
   count?: number;
   children?: ReactNode;
+  onContextMenu?: (e: MouseEvent) => void;
 }) {
   return (
-    <div className="side-item" data-active={active || undefined} onClick={onClick} role="button" tabIndex={0}>
+    <div
+      className="side-item"
+      data-active={active || undefined}
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      role="button"
+      tabIndex={0}
+    >
       {icon && <span className="side-icon">{icon}</span>}
       <span className="side-label">{label}</span>
       {count !== undefined && <span className="side-count">{count}</span>}
