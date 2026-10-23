@@ -16,17 +16,32 @@ import "./styles/shelf.css";
 import "./styles/projects.css";
 import "./styles/viewer.css";
 import "./styles/feeds.css";
-import { App } from "./App";
-import { startFeedSync } from "./lib/feeds";
-import { migrate } from "./lib/migrate";
-import { seedOnce } from "./lib/seed";
+import "./styles/dropzone.css";
 
-void seedOnce();
-void migrate();
-startFeedSync();
+const root = createRoot(document.getElementById("root")!);
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// a mesma página serve duas janelas: o app e a caixa da bandeja do sistema
+if (location.hash === "#dropzone") {
+  document.documentElement.classList.add("is-dropzone");
+  // a caixa não toca no armazenamento — só repassa para a janela principal
+  void import("./features/dropzone/Dropzone").then(({ Dropzone }) =>
+    root.render(
+      <StrictMode>
+        <Dropzone />
+      </StrictMode>,
+    ),
+  );
+} else {
+  void Promise.all([import("./App"), import("./lib/feeds"), import("./lib/migrate"), import("./lib/seed")]).then(
+    ([{ App }, { startFeedSync }, { migrate }, { seedOnce }]) => {
+      void seedOnce();
+      void migrate();
+      startFeedSync();
+      root.render(
+        <StrictMode>
+          <App />
+        </StrictMode>,
+      );
+    },
+  );
+}

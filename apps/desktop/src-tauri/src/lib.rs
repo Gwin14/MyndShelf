@@ -2,9 +2,15 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::{Duration, Instant, UNIX_EPOCH};
 
-use tauri::{ipc::Response, Manager, State};
+use tauri::{
+    image::Image,
+    ipc::Response,
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    AppHandle, Emitter, EventTarget, Manager, PhysicalPosition, Rect, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+};
 
 const MAX_BYTES: usize = 2_500_000;
 const USER_AGENT: &str = "Mozilla/5.0 (compatible; MyndShelfBot/0.1; link preview)";
@@ -156,19 +162,188 @@ fn open_path(path: String, reveal: bool) -> Result<(), String> {
     cmd.spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
+/* ───────────────────────── caixa de soltar (bandeja do sistema) ───────────────────────── */
+
+const DROPZONE: &str = "dropzone";
+const DROPZONE_W: f64 = 340.0;
+const DROPZONE_H: f64 = 300.0;
+
+/// Quando a caixa foi escondida pela última vez — o clique no ícone da bandeja
+/// que a fechou (por "clique fora") não deve reabri-la logo em seguida.
+#[derive(Default)]
+struct DropzoneState(Mutex<Option<Instant>>);
+
+fn dropzone_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
+    if let Some(w) = app.get_webview_window(DROPZONE) {
+        return Ok(w);
+    }
+    WebviewWindowBuilder::new(app, DROPZONE, WebviewUrl::App("index.html#dropzone".into()))
+        .title("MyndShelf")
+        .inner_size(DROPZONE_W, DROPZONE_H)
+        .decorations(false)
+        .transparent(true)
+        .resizable(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .visible(false)
+        .shadow(false)
+        .build()
+}
+
+/// Coloca a caixa logo abaixo do ícone (ou acima, se a bandeja estiver embaixo, como no Windows).
+/// Devolve `true` quando ficou acima — a animação nasce do lado do ícone.
+fn place_near(window: &WebviewWindow, rect: &Rect) -> tauri::Result<bool> {
+    let scale = window.scale_factor()?;
+    let pos = rect.position.to_physical::<f64>(scale);
+    let size = rect.size.to_physical::<f64>(scale);
+    let (w, h) = (DROPZONE_W * scale, DROPZONE_H * scale);
+    let mut x = pos.x + size.width / 2.0 - w / 2.0;
+    let mut y = pos.y + size.height + 6.0 * scale;
+    let mut above = false;
+    if let Some(monitor) = window.current_monitor()? {
+        let m = monitor.size();
+        let mp = monitor.position();
+        if pos.y > mp.y as f64 + m.height as f64 / 2.0 {
+            y = pos.y - h - 6.0 * scale;
+            above = true;
+        }
+        x = x.clamp(mp.x as f64 + 8.0, mp.x as f64 + m.width as f64 - w - 8.0);
+    }
+    window.set_position(PhysicalPosition::new(x, y))?;
+    Ok(above)
+}
+
+/// A caixa anima a própria saída e depois chama `hide_dropzone`.
+fn ask_close(window: &WebviewWindow) -> tauri::Result<()> {
+    window.emit_to(EventTarget::webview_window(DROPZONE), "dropzone-close", ())
+}
+
+fn toggle_dropzone(app: &AppHandle, rect: &Rect) -> tauri::Result<()> {
+    let window = dropzone_window(app)?;
+    if window.is_visible()? {
+        return ask_close(&window);
+    }
+    let just_hidden = app
+        .state::<DropzoneState>()
+        .0
+        .lock()
+        .ok()
+        .and_then(|t| *t)
+        .is_some_and(|t| t.elapsed() < Duration::from_millis(400));
+    if just_hidden {
+        return Ok(());
+    }
+    let above = place_near(&window, rect)?;
+    window.show()?;
+    window.set_focus()?;
+    // o painel começa invisível; este evento dispara a animação de entrada
+    window.emit_to(EventTarget::webview_window(DROPZONE), "dropzone-open", above)
+}
+
+#[tauri::command]
+fn hide_dropzone(app: AppHandle, state: State<DropzoneState>) -> Result<(), String> {
+    if let Ok(mut t) = state.0.lock() {
+        *t = Some(Instant::now());
+    }
+    if let Some(w) = app.get_webview_window(DROPZONE) {
+        w.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// O botão esquerdo do mouse está pressionado agora (em qualquer app)?
+/// Distingue "clicar fora" (fecha a caixa) de "segurar e arrastar algo" (mantém aberta).
+#[tauri::command]
+fn mouse_pressed() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        #[link(name = "CoreGraphics", kind = "framework")]
+        extern "C" {
+            fn CGEventSourceButtonState(state_id: i32, button: u32) -> bool;
+        }
+        // kCGEventSourceStateCombinedSessionState = 0, kCGMouseButtonLeft = 0
+        unsafe { CGEventSourceButtonState(0, 0) }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        false
+    }
+}
+
+/// Links (aba do Safari, link de uma página) não chegam como arquivo:
+/// lemos o texto/URL direto da área de arrasto do macOS.
+#[cfg(target_os = "macos")]
+fn drag_pasteboard_text() -> Option<String> {
+    use objc2_app_kit::{NSPasteboard, NSPasteboardNameDrag, NSPasteboardTypeString, NSPasteboardTypeURL};
+    unsafe {
+        let pb = NSPasteboard::pasteboardWithName(NSPasteboardNameDrag);
+        pb.stringForType(NSPasteboardTypeURL)
+            .or_else(|| pb.stringForType(NSPasteboardTypeString))
+            .map(|s| s.to_string())
+            .filter(|s| !s.trim().is_empty())
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn drag_pasteboard_text() -> Option<String> {
+    None
+}
+
+fn build_tray(app: &tauri::App) -> tauri::Result<()> {
+    let open = MenuItem::with_id(app, "open", "Abrir MyndShelf", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&open, &quit])?;
+
+    TrayIconBuilder::with_id("main")
+        .icon(Image::from_bytes(include_bytes!("../icons/tray.png"))?)
+        .icon_as_template(true)
+        .tooltip("MyndShelf — solte coisas aqui")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "open" => {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.unminimize();
+                    let _ = w.set_focus();
+                }
+            }
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, rect, .. } = event {
+                let _ = toggle_dropzone(tray.app_handle(), &rect);
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(Dropped::default())
+        .manage(DropzoneState::default())
+        .setup(|app| {
+            build_tray(app)?;
+            dropzone_window(app.handle())?;
+            Ok(())
+        })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
-                if let Ok(mut set) = window.state::<Dropped>().0.lock() {
+                if paths.is_empty() {
+                    // não é arquivo: provavelmente um link ou texto
+                    if let Some(text) = drag_pasteboard_text() {
+                        let _ = window.emit_to(EventTarget::webview_window(window.label()), "drop-text", text);
+                    }
+                } else if let Ok(mut set) = window.state::<Dropped>().0.lock() {
                     set.extend(paths.iter().cloned());
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path])
+        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o MyndShelf");
 }

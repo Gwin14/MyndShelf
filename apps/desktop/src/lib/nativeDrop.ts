@@ -9,7 +9,10 @@ import { useUi } from "./ui";
  * (com o caminho real, inclusive de pastas) e decide pela seção aberta.
  */
 export function startNativeDrop(): () => void {
-  let stop = () => {};
+  // o listener chega de forma assíncrona: se o efeito já foi desfeito (StrictMode
+  // monta, desmonta e monta de novo), removemos na hora — senão cada item entra duas vezes
+  let disposed = false;
+  let stop: (() => void) | undefined;
   void onNativeDrop(async (e) => {
     const ui = useUi.getState();
     if (e.type !== "drop") {
@@ -28,6 +31,12 @@ export function startNativeDrop(): () => void {
         await captureImageFile(await readDroppedFile(path, info.name));
       }
     }
-  }).then((unlisten) => (stop = unlisten));
-  return () => stop();
+  }).then((unlisten) => {
+    if (disposed) unlisten();
+    else stop = unlisten;
+  });
+  return () => {
+    disposed = true;
+    stop?.();
+  };
 }
