@@ -7,6 +7,7 @@ import { ShelfSidebar } from "./features/shelf/ShelfSidebar";
 import { ShelfView } from "./features/shelf/ShelfView";
 import { ProjectsSidebar } from "./features/projects/ProjectsSidebar";
 import { ProjectsView } from "./features/projects/ProjectsView";
+import { startNativeDrop } from "./lib/nativeDrop";
 import { useUi, type Section } from "./lib/ui";
 
 const KEYS: Record<string, Section> = { "1": "capture", "2": "shelf", "3": "projects" };
@@ -14,6 +15,8 @@ const KEYS: Record<string, Section> = { "1": "capture", "2": "shelf", "3": "proj
 export function App() {
   const section = useUi((s) => s.section);
   const setSection = useUi((s) => s.setSection);
+
+  useEffect(() => startNativeDrop(), []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

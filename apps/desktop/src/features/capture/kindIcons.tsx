@@ -1,5 +1,5 @@
 import type { CaptureKind } from "@myndshelf/types";
-import { BookOpen, Code, Disc3, Film, Gamepad2, Image, Link2, MapPin, Newspaper, Radio, StickyNote, Tv } from "lucide-react";
+import { BookOpen, Code, Disc3, Film, Gamepad2, Image, Link2, MapPin, Newspaper, Radio, ShoppingBag, StickyNote, Tv } from "lucide-react";
 
 const S = 15;
 export const KIND_ICONS: Record<CaptureKind, React.JSX.Element> = {
@@ -9,6 +9,7 @@ export const KIND_ICONS: Record<CaptureKind, React.JSX.Element> = {
   video: <Tv size={S} />,
   film: <Film size={S} />,
   game: <Gamepad2 size={S} />,
+  product: <ShoppingBag size={S} />,
   article: <Newspaper size={S} />,
   image: <Image size={S} />,
   code: <Code size={S} />,

@@ -25,6 +25,8 @@ function estimateHeight(item: CaptureItem): number {
       return 1.2 + caption;
     case "video":
       return 0.92 + caption;
+    case "product":
+      return 1 + caption;
     case "game":
       return 1.18 + caption;
     case "film":
@@ -51,6 +53,7 @@ export function CaptureView() {
   const captures = useLibrary((s) => s.captures);
   const { captureKind, captureTag, captureQuery, captureFeed, openCaptureId, viewerCaptureId, set } = useUi();
   const [dragging, setDragging] = useState(false);
+  const nativeDrag = useUi((s) => s.nativeDrag);
 
   const items = useMemo(() => {
     const q = captureQuery.trim().toLowerCase();
@@ -130,7 +133,7 @@ export function CaptureView() {
         </div>
       )}
 
-      {dragging && <div className="drop-veil">Solte para guardar ✦</div>}
+      {(dragging || nativeDrag) && <div className="drop-veil">Solte para guardar ✦</div>}
       {openCaptureId && <CaptureDetail id={openCaptureId} onClose={() => set({ openCaptureId: null })} />}
       {viewerCaptureId && (
         <Viewer item={captures.find((c) => c.id === viewerCaptureId)} onClose={() => set({ viewerCaptureId: null })} />

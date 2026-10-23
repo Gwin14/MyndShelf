@@ -7,6 +7,7 @@ export type CaptureKind =
   | "video"
   | "film"
   | "game"
+  | "product"
   | "article"
   | "image"
   | "code"
@@ -43,6 +44,16 @@ export interface PlaceInfo {
   near?: { lat: number; lng: number };
 }
 
+export interface ProductInfo {
+  price?: number;
+  /** código ISO: BRL, USD… */
+  currency?: string;
+  brand?: string;
+  /** nome da loja */
+  store?: string;
+  available?: boolean;
+}
+
 export type CaptureStatus = "loading" | "ready" | "error";
 
 export interface CaptureItem {
@@ -59,6 +70,8 @@ export interface CaptureItem {
   note?: string;
   /** Presente quando o item é um lugar no mapa. */
   place?: PlaceInfo;
+  /** Presente quando o item é um produto de loja. */
+  product?: ProductInfo;
   tags: string[];
   status: CaptureStatus;
   /** Matiz (0–360) usada para tingir capas sem imagem. */
@@ -99,7 +112,7 @@ export interface FeedEntry {
 
 /* ───────────────────────────── Estante ───────────────────────────── */
 
-export type CreationMedium = "image" | "document" | "audio" | "video" | "text" | "code" | "object";
+export type CreationMedium = "image" | "document" | "audio" | "video" | "text" | "code" | "folder" | "object";
 
 export interface Creation {
   id: string;
@@ -108,6 +121,8 @@ export interface Creation {
   fileName?: string;
   /** Caminho absoluto no disco (desktop). */
   filePath?: string;
+  /** Pastas: o que tinha dentro quando foi arrastada. */
+  folder?: { items: number; sample: string[] };
   /** Prévia leve (data URL) para renderizar sem acessar o disco. */
   preview?: string;
   mime?: string;

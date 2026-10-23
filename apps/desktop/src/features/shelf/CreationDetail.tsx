@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Download, Star, Trash2 } from "lucide-react";
+import { BookOpen, Download, FolderOpen, Search, Star, Trash2 } from "lucide-react";
 import { formatBytes, MEDIUM_LABELS } from "@myndshelf/core";
 import type { Creation, CreationMedium } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
 import { Modal } from "../../components/Modal";
+import { FILE_MANAGER, isTauri, openPath } from "../../lib/platform";
 import { fileStore, library, useLibrary } from "../../lib/store";
 import { docKindOf, docLabel } from "../../lib/documents";
 import { DocumentViewer } from "./DocumentViewer";
@@ -29,8 +30,12 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
   const shelves = useLibrary((s) => s.shelves);
   const blobUrl = useBlobUrl(id);
   const [reading, setReading] = useState(false);
+  const [pathError, setPathError] = useState<string>();
   if (!item) return null;
   const docKind = docKindOf(item);
+  const isFolder = item.medium === "folder";
+  const openOriginal = (reveal: boolean) =>
+    openPath(item.filePath!, reveal).catch((e) => setPathError(e instanceof Error ? e.message : String(e)));
   const update = (patch: Partial<Creation>) => library.getState().updateCreation(id, patch);
 
   return (
@@ -42,6 +47,15 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
               <img className="detail-media" src={blobUrl} alt="" />
             ) : item.medium === "video" && blobUrl ? (
               <video className="detail-media" src={blobUrl} controls poster={item.preview} />
+            ) : isFolder ? (
+              <button
+                className="detail-doc"
+                disabled={!item.filePath || !isTauri}
+                onClick={() => openOriginal(false)}
+                title={`Abrir no ${FILE_MANAGER}`}
+              >
+                <ShelfObject item={item} />
+              </button>
             ) : docKind ? (
               <button className="detail-doc" onClick={() => setReading(true)} title="Abrir documento">
                 <ShelfObject item={item} />
@@ -106,10 +120,34 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
             onChange={(e) => update({ notes: e.target.value })}
           />
 
+          {isFolder && item.folder && item.folder.sample.length > 0 && (
+            <>
+              <label className="label mono">Dentro da pasta · {item.folder.items}</label>
+              <ul className="folder-list mono">
+                {item.folder.sample.map((n) => (
+                  <li key={n} data-dir={n.endsWith("/") || undefined}>
+                    {n}
+                  </li>
+                ))}
+                {item.folder.items > item.folder.sample.length && <li className="folder-more">+ {item.folder.items - item.folder.sample.length}</li>}
+              </ul>
+            </>
+          )}
+
           <label className="label mono">Projetos</label>
           <AddToProject kind="creation" refId={item.id} />
 
           <div className="detail-actions">
+            {isFolder && (
+              <button className="btn btn-flare" disabled={!item.filePath || !isTauri} onClick={() => openOriginal(false)}>
+                <FolderOpen size={14} /> Abrir no {FILE_MANAGER}
+              </button>
+            )}
+            {!isFolder && item.filePath && isTauri && (
+              <button className="btn" onClick={() => openOriginal(true)}>
+                <Search size={14} /> Mostrar no {FILE_MANAGER}
+              </button>
+            )}
             {docKind && (
               <button className="btn btn-flare" onClick={() => setReading(true)}>
                 <BookOpen size={14} /> Abrir {docLabel(docKind, item.fileName)}
@@ -138,6 +176,10 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
               <Trash2 size={14} /> Remover
             </button>
           </div>
+          {pathError && <p className="mono feed-follow-error">⚠ {pathError}</p>}
+          {isFolder && (!item.filePath || !isTauri) && (
+            <p className="mono folder-hint">Abrir a pasta original funciona no app desktop, com a pasta arrastada do {FILE_MANAGER}.</p>
+          )}
         </div>
       </div>
       {reading && <DocumentViewer item={item} onClose={() => setReading(false)} />}

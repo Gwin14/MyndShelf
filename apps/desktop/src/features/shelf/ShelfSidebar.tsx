@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Code, FileText, Image, Inbox, Layers, Music, Plus, Shapes, Star, Video, X } from "lucide-react";
+import { Archive, Code, FileText, Folder, Image, Inbox, Layers, Music, Plus, Shapes, Star, Video, X } from "lucide-react";
 import { MEDIUM_LABELS } from "@myndshelf/core";
 import type { CreationMedium } from "@myndshelf/types";
 import { SideItem, SideSection } from "../../components/SideSection";
@@ -14,6 +14,7 @@ const MEDIUM_ICONS: Record<CreationMedium, React.JSX.Element> = {
   video: <Video size={15} />,
   text: <FileText size={15} />,
   code: <Code size={15} />,
+  folder: <Folder size={15} />,
   object: <Shapes size={15} />,
 };
 

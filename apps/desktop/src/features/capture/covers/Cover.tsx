@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { CaptureItem } from "@myndshelf/types";
-import { formatCoords, hostOf, KIND_LABELS } from "@myndshelf/core";
+import { formatCoords, formatPrice, hostOf, KIND_LABELS } from "@myndshelf/core";
 import { MapTiles } from "../../../components/MapTiles";
 import { Play } from "lucide-react";
 import { Art } from "./Art";
@@ -139,6 +139,35 @@ function GameCover({ item }: Props) {
   );
 }
 
+function ProductCover({ item }: Props) {
+  const p = item.product;
+  const price = formatPrice(p?.price, p?.currency);
+  return (
+    <div className="cv-product">
+      <div className="cv-product-shot">
+        {item.image ? (
+          <Art src={item.image} />
+        ) : (
+          // loja sem foto (bloqueou o leitor): uma sacola de papel com o nome dela
+          <div className="cv-bag">
+            <span className="cv-bag-handle" />
+            <span className="cv-bag-body">
+              <span className="cv-bag-store">{p?.store ?? item.siteName}</span>
+            </span>
+          </div>
+        )}
+      </div>
+      {/* etiqueta de papel pendurada por um barbante */}
+      <div className="cv-tag" data-sold={p?.available === false || undefined}>
+        <span className="cv-tag-string" />
+        <span className="cv-tag-hole" />
+        <span className="cv-tag-brand mono">{p?.brand ?? p?.store ?? item.siteName}</span>
+        <strong className="cv-tag-price">{p?.available === false ? "esgotado" : (price ?? "✦")}</strong>
+      </div>
+    </div>
+  );
+}
+
 function ArticleCover({ item }: Props) {
   const issue = String((item.hue * 7) % 97).padStart(2, "0");
   return (
@@ -257,6 +286,7 @@ const COVERS: Record<CaptureItem["kind"], (p: Props) => React.JSX.Element> = {
   video: VideoCover,
   film: FilmCover,
   game: GameCover,
+  product: ProductCover,
   article: ArticleCover,
   image: ImageCover,
   code: CodeCover,

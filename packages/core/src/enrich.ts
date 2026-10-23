@@ -1,8 +1,9 @@
-import type { CaptureItem, PlaceInfo } from "@myndshelf/types";
+import type { CaptureItem, CaptureKind, PlaceInfo } from "@myndshelf/types";
 import { detectKind, hostOf, youtubeId } from "./kinds";
 import { parseOpenGraph } from "./opengraph";
 import { improveImage, siteDetails, type SiteDetails } from "./sites";
 import { isShortMapUrl, parsePlaceUrl, placeTitle, resolvePlace } from "./places";
+import { formatPrice, productFromHtml, productStoreOf } from "./products";
 import { cleanGameTitle, gameStoreOf, lookupGame, sameGame, steamDetails, type GameDetails } from "./games";
 
 /** Cada plataforma fornece seu jeito de baixar HTML (Tauri/Rust, servidor, RN…). */
@@ -10,8 +11,11 @@ export type HtmlFetcher = (url: string) => Promise<string>;
 
 export type CaptureEnrichment = Pick<
   CaptureItem,
-  "kind" | "title" | "description" | "image" | "siteName" | "favicon" | "author" | "place"
+  "kind" | "title" | "description" | "image" | "siteName" | "favicon" | "author" | "place" | "product"
 >;
+
+/** Tipos que só viram "produto" quando nada mais específico bateu (livro, jogo, música… têm prioridade). */
+const GENERIC_KINDS: CaptureKind[] = ["link", "article"];
 
 function cleanTitle(title: string | undefined, siteName: string | undefined): string | undefined {
   if (!title) return undefined;
@@ -38,8 +42,9 @@ export async function enrichLink(url: string, fetchHtml: HtmlFetcher): Promise<C
   const host = hostOf(url);
   let og = {};
   let site: SiteDetails = {};
+  let html = "";
   try {
-    const html = await fetchHtml(url);
+    html = await fetchHtml(url);
     og = parseOpenGraph(html, url);
     site = siteDetails(url, html);
   } catch {
@@ -55,6 +60,34 @@ export async function enrichLink(url: string, fetchHtml: HtmlFetcher): Promise<C
   const byline = splitByline(site.title ?? (cleanTitle(data.title, data.siteName) || host || url));
 
   if (kind === "game") return enrichGame(url, fetchHtml, { ...data, title: byline.title });
+
+  // produto de loja: só quando nenhum tipo com prioridade reconheceu o link
+  if (GENERIC_KINDS.includes(kind) || (kind === "image" && site.product)) {
+    const store = productStoreOf(url);
+    const product = site.product ?? productFromHtml(html);
+    if (store || product) {
+      // página de bloqueio ("Access Denied", "Mercado Libre"…): o título não fala do produto do link
+      const slugWord = store?.name?.toLowerCase().split(" ").find((w) => w.length > 3);
+      const generic =
+        !data.title ||
+        data.title === host ||
+        !!site.blocked ||
+        (!!slugWord && !byline.title.toLowerCase().includes(slugWord));
+      const title = product?.name ?? (generic ? store?.name : byline.title) ?? byline.title;
+      return {
+        kind: "product",
+        title,
+        description: product?.description ?? (generic ? undefined : data.description),
+        image: product?.image ?? site.image ?? (generic ? undefined : improveImage(data.image)),
+        siteName: store?.label ?? data.siteName ?? host,
+        favicon: data.favicon,
+        author: [product?.brand, formatPrice(product?.price, product?.currency)].filter(Boolean).join(" · ") || undefined,
+        product: product
+          ? { price: product.price, currency: product.currency, brand: product.brand, available: product.available, store: store?.label ?? data.siteName ?? host }
+          : { store: store?.label ?? data.siteName ?? host },
+      };
+    }
+  }
 
   return {
     kind,

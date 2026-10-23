@@ -10,3 +10,4 @@ export * from "./feedResolve";
 export * from "./sites";
 export * from "./places";
 export * from "./games";
+export * from "./products";

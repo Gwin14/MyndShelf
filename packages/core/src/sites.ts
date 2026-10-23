@@ -1,4 +1,5 @@
 import type { CaptureKind } from "@myndshelf/types";
+import type { ProductData } from "./products";
 import { decodeEntities } from "./opengraph";
 
 /** Dados que o OpenGraph não traz (ou traz errado) para sites específicos. */
@@ -7,6 +8,9 @@ export interface SiteDetails {
   title?: string;
   image?: string;
   author?: string;
+  product?: ProductData;
+  /** a loja devolveu uma página de bloqueio/captcha */
+  blocked?: boolean;
 }
 
 const text = (html?: string) =>
@@ -30,7 +34,19 @@ function amazon(url: URL, html: string): SiteDetails {
   const author = text(html.match(/class="author[^"]*"[\s\S]{0,1500}?<a[^>]*>([\s\S]*?)<\/a>/)?.[1]);
   const title = text(html.match(/id="productTitle"[^>]*>([\s\S]*?)<\/span>/)?.[1]);
 
-  return { kind: isbnPath || bookMarkers ? "book" : undefined, title, image, author };
+  const isBook = isbnPath || bookMarkers;
+  // preço do bloco principal ("a-offscreen" dentro de corePrice/priceToPay)
+  const priceText = html.match(/(?:corePrice|priceToPay|apex_desktop)[\s\S]{0,1500}?class="a-offscreen">([^<]+)</)?.[1];
+  const price = priceText ? parseFloat(priceText.replace(/[^\d,.]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", ".")) : undefined;
+  const currency = priceText?.includes("R$") ? "BRL" : priceText?.includes("$") ? "USD" : priceText?.includes("€") ? "EUR" : undefined;
+  return {
+    kind: isBook ? "book" : undefined,
+    title,
+    image,
+    author,
+    blocked: !title && html.length < 20_000,
+    product: !isBook && title ? { name: title, image, price: Number.isFinite(price) ? price : undefined, currency } : undefined,
+  };
 }
 
 const SITES: { host: RegExp; extract: (url: URL, html: string) => SiteDetails }[] = [

@@ -77,6 +77,7 @@ export const KIND_LABELS: Record<CaptureKind, string> = {
   video: "Vídeo",
   film: "Filme",
   game: "Jogo",
+  product: "Produto",
   article: "Leitura",
   image: "Imagem",
   code: "Código",

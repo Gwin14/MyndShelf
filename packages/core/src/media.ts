@@ -69,6 +69,7 @@ export const MEDIUM_LABELS: Record<CreationMedium, string> = {
   video: "Vídeo",
   text: "Texto",
   code: "Código",
+  folder: "Pasta",
   object: "Objeto",
 };
 

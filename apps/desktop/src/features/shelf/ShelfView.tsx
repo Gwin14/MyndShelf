@@ -3,7 +3,7 @@ import { LayoutGrid, Library, Plus } from "lucide-react";
 import type { Creation } from "@myndshelf/types";
 import { MEDIUM_LABELS } from "@myndshelf/core";
 import { Headline } from "../../components/Headline";
-import { addCreationsFromFiles, pickFiles } from "../../lib/files";
+import { addCreationsFromFiles, addFolderFromEntry, pickFiles } from "../../lib/files";
 import { useLibrary } from "../../lib/store";
 import { useUi } from "../../lib/ui";
 import { CreationDetail } from "./CreationDetail";
@@ -14,6 +14,7 @@ export function ShelfView() {
   const shelves = useLibrary((s) => s.shelves);
   const { shelfView, shelfFilter, shelfMedium, openCreationId, set } = useUi();
   const [dragging, setDragging] = useState(false);
+  const nativeDrag = useUi((s) => s.nativeDrag);
 
   const visible = useMemo(
     () =>
@@ -57,7 +58,11 @@ export function ShelfView() {
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        void addCreationsFromFiles(e.dataTransfer.files, targetShelf);
+        // pastas chegam como "entradas de diretório"; arquivos seguem normais
+        const entries = Array.from(e.dataTransfer.items).map((it) => it.webkitGetAsEntry?.());
+        const files = Array.from(e.dataTransfer.files).filter((_, i) => !entries[i]?.isDirectory);
+        entries.forEach((entry) => entry?.isDirectory && void addFolderFromEntry(entry as FileSystemDirectoryEntry, targetShelf));
+        void addCreationsFromFiles(files, targetShelf);
       }}
     >
       <Headline
@@ -153,7 +158,7 @@ export function ShelfView() {
         </div>
       )}
 
-      {dragging && <div className="drop-veil">Solte para pôr na estante ✦</div>}
+      {(dragging || nativeDrag) && <div className="drop-veil">Solte para pôr na estante ✦</div>}
       {openCreationId && <CreationDetail id={openCreationId} onClose={() => set({ openCreationId: null })} />}
     </div>
   );

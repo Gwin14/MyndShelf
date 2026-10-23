@@ -22,6 +22,9 @@ interface UiState {
 
   activeProjectId: string | null;
 
+  /** algo está sendo arrastado do sistema para a janela (desktop) */
+  nativeDrag: boolean;
+
   set(patch: Partial<UiState>): void;
 }
 
@@ -42,6 +45,8 @@ export const useUi = create<UiState>((set) => ({
   openCreationId: null,
 
   activeProjectId: null,
+
+  nativeDrag: false,
 
   set: (patch) => set(patch),
 }));

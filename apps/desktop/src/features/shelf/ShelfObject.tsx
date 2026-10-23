@@ -92,6 +92,22 @@ const OBJECTS: Record<Creation["medium"], (c: Creation) => React.JSX.Element> = 
       </div>
     );
   },
+  folder: (c) => (
+    // pasta de arquivo: aba com etiqueta, papéis aparecendo, carimbo com a contagem
+    <div className="obj-folder">
+      <span className="obj-folder-back">
+        <span className="obj-folder-tab mono">{c.fileName}</span>
+      </span>
+      <span className="obj-folder-paper" />
+      <span className="obj-folder-paper" />
+      <span className="obj-folder-front">
+        <strong>{c.title}</strong>
+        <span className="obj-folder-stamp mono">
+          {c.folder?.items ?? 0} {c.folder?.items === 1 ? "item" : "itens"}
+        </span>
+      </span>
+    </div>
+  ),
   object: (c) => (
     <div className="obj-jar">
       <div className="obj-jar-glass">
