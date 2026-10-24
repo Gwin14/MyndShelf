@@ -14,6 +14,7 @@ import { configureAi } from "@myndshelf/core";
 import { Cosmos } from "../components/Cosmos";
 import { ActionSheetHost } from "../components/ActionSheet";
 import { ToastHost } from "../components/Toast";
+import { PromptHost } from "../components/PromptHost";
 import { startFeedSync } from "../lib/feeds";
 import { seedOnce } from "../lib/seed";
 import { startAutoTag } from "../lib/ai";
@@ -72,6 +73,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings" options={{ presentation: "modal", contentStyle: styles.modal }} />
       </Stack>
       <ActionSheetHost />
+      <PromptHost />
       <ToastHost />
       <StatusBar style="light" />
     </GestureHandlerRootView>
