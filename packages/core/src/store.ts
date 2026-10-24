@@ -46,6 +46,9 @@ export interface LibraryActions {
   removeNode(projectId: string, nodeId: string): void;
   connect(projectId: string, from: string, to: string): void;
   disconnect(projectId: string, edgeId: string): void;
+
+  /** Troca o acervo inteiro (importar um backup). */
+  replaceLibrary(data: LibraryData): void;
 }
 
 export type LibraryState = LibraryData & LibraryActions;
@@ -238,6 +241,10 @@ export function createLibraryStore(storage: StateStorage, name = "myndshelf-libr
           },
           disconnect(projectId, edgeId) {
             patchProject(projectId, (p) => ({ edges: p.edges.filter((e) => e.id !== edgeId) }));
+          },
+
+          replaceLibrary(data) {
+            set({ ...empty, ...data });
           },
         };
       },

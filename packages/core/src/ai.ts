@@ -12,6 +12,20 @@ export const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_RESERVE_MODEL = "gemini-flash-latest";
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
+/** O fetch padrão do React Native não entrega o corpo aos pedaços: o mobile injeta o `expo/fetch`. */
+let aiFetch: typeof fetch = (...args) => fetch(...args);
+
+export function configureAi(options: { fetch?: typeof fetch }) {
+  if (options.fetch) aiFetch = options.fetch;
+}
+
+/** Hermes (React Native) não tem DOMException. */
+function abortError(): Error {
+  const e = new Error("aborted");
+  e.name = "AbortError";
+  return e;
+}
+
 export type AiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
 export type AiErrorCode = "no-key" | "bad-key" | "quota" | "blocked" | "busy" | "network" | "empty";
@@ -66,7 +80,7 @@ const wait = (ms: number, signal?: AbortSignal) =>
     const t = setTimeout(resolve, ms);
     signal?.addEventListener("abort", () => {
       clearTimeout(t);
-      reject(new DOMException("aborted", "AbortError"));
+      reject(abortError());
     });
   });
 
@@ -91,7 +105,7 @@ async function post(req: AiRequest, action: string, extra?: Record<string, unkno
 async function postOnce(req: AiRequest, model: string, action: string, extra?: Record<string, unknown>): Promise<Response> {
   let res: Response;
   try {
-    res = await fetch(`${ENDPOINT}/${model}:${action}`, {
+    res = await aiFetch(`${ENDPOINT}/${model}:${action}`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": req.key },
       body: body(req, model, extra),

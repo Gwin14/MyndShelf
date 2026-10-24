@@ -4,8 +4,24 @@
     {
       "name": "desktop-web",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": ["pnpm", "--filter", "@myndshelf/desktop", "dev"],
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@myndshelf/desktop",
+        "dev"
+      ],
       "port": 1420
+    },
+    {
+      "name": "mobile",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@myndshelf/mobile",
+        "start"
+      ],
+      "port": 8081
     }
   ]
 }

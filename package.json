@@ -7,7 +7,10 @@
     "typecheck": "turbo typecheck",
     "desktop": "corepack pnpm --filter @myndshelf/desktop tauri dev",
     "desktop:web": "corepack pnpm --filter @myndshelf/desktop dev",
-    "desktop:build": "corepack pnpm --filter @myndshelf/desktop tauri build"
+    "desktop:build": "corepack pnpm --filter @myndshelf/desktop tauri build",
+    "mobile": "corepack pnpm --filter @myndshelf/mobile start",
+    "mobile:ios": "corepack pnpm --filter @myndshelf/mobile ios",
+    "mobile:android": "corepack pnpm --filter @myndshelf/mobile android"
   },
   "devDependencies": {
     "turbo": "^2.11.10",

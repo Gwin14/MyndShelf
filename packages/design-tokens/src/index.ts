@@ -12,6 +12,7 @@ export const colors = {
   paperDim: "#bcb3a1",
   paperMute: "#7a7468",
   line: "rgba(239, 230, 210, 0.12)",
+  lineStrong: "rgba(239, 230, 210, 0.24)",
   /* labareda solar — das referências */
   cobalt: "#2a4bff",
   cyan: "#6fd6ff",
@@ -26,10 +27,31 @@ export const gradients = {
   beam: `radial-gradient(60% 80% at 50% 100%, rgba(111, 214, 255, 0.35), rgba(42, 75, 255, 0.08) 55%, transparent 75%)`,
 } as const;
 
+/** Labareda em paradas soltas — para LinearGradient (RN) e afins. */
+export const flareStops = {
+  colors: [colors.cobalt, colors.cyan, colors.sun, colors.amber, colors.ember, colors.magenta],
+  locations: [0, 0.18, 0.38, 0.55, 0.74, 1],
+} as const;
+
 export const fonts = {
   display: `"Instrument Serif", "Times New Roman", serif`,
   body: `"Inter Tight Variable", "Inter Tight", system-ui, sans-serif`,
   mono: `"Space Mono", ui-monospace, monospace`,
+} as const;
+
+/** Nomes das fontes carregadas no React Native (@expo-google-fonts). */
+export const fontFamilies = {
+  display: "InstrumentSerif_400Regular",
+  displayItalic: "InstrumentSerif_400Regular_Italic",
+  body: "InterTight_400Regular",
+  bodyMedium: "InterTight_500Medium",
+  bodySemi: "InterTight_600SemiBold",
+  bodyBold: "InterTight_700Bold",
+  mono: "SpaceMono_400Regular",
+  monoBold: "SpaceMono_700Bold",
+  prose: "Newsreader_400Regular",
+  proseItalic: "Newsreader_400Regular_Italic",
+  proseSemi: "Newsreader_600SemiBold",
 } as const;
 
 export const radii = { sm: 4, md: 10, lg: 18, pill: 999 } as const;
@@ -42,5 +64,5 @@ export const motion = {
   slow: 600,
 } as const;
 
-export const tokens = { colors, gradients, fonts, radii, space, motion } as const;
+export const tokens = { colors, gradients, flareStops, fonts, fontFamilies, radii, space, motion } as const;
 export type Tokens = typeof tokens;

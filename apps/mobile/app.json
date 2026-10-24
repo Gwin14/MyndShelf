@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "MyndShelf",
+    "slug": "myndshelf",
+    "version": "0.1.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "myndshelf",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#06050b",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.myndshelf.app"
+    },
+    "android": {
+      "package": "com.myndshelf.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#06050b",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#06050b",
+          "image": "./assets/icon.png",
+          "imageWidth": 120
+        }
+      ],
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-video",
+      "expo-audio"
+    ],
+    "experiments": {
+      "typedRoutes": false,
+      "reactCompiler": true
+    }
+  }
+}
