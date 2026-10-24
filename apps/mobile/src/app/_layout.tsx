@@ -68,7 +68,8 @@ export default function RootLayout() {
         <Stack.Screen name="creation/[id]" options={{ presentation: "modal", contentStyle: styles.modal }} />
         <Stack.Screen name="creation/new" options={{ presentation: "modal", contentStyle: styles.modal }} />
         <Stack.Screen name="creation/read/[id]" options={{ presentation: "fullScreenModal", contentStyle: styles.viewer, animation: "fade" }} />
-        <Stack.Screen name="project/[id]" options={{ animation: "fade" }} />
+        <Stack.Screen name="project/[id]" options={{ animation: "fade", gestureEnabled: false }} />
+        <Stack.Screen name="project/add" options={{ presentation: "modal", contentStyle: styles.modal }} />
         <Stack.Screen name="save" options={{ animation: "none" }} />
         <Stack.Screen name="settings" options={{ presentation: "modal", contentStyle: styles.modal }} />
       </Stack>

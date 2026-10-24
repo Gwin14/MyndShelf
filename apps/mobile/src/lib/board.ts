@@ -5,6 +5,9 @@ import { library } from "./store";
 
 export { NODE_WIDTH };
 
+/** O mundo do quadro é uma vista enorme com a origem no meio: toques fora dos limites de uma vista se perdem no Android. */
+export const WORLD = 20000;
+
 /** Coloca um nó perto do centro visível do quadro, na primeira vaga livre de uma espiral. */
 export function placeNode(projectId: string, kind: BoardNodeKind, refId?: string, text?: string) {
   const s = library.getState();

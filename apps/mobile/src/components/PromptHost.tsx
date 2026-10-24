@@ -24,7 +24,7 @@ export function PromptHost() {
         <View style={styles.center} pointerEvents="box-none">
           <Animated.View entering={ZoomIn.springify().damping(18)} style={styles.card}>
             <Text style={styles.title}>{prompt.title}</Text>
-            <Field value={value} onChangeText={setValue} placeholder={prompt.placeholder} autoFocus returnKeyType="done" onSubmitEditing={() => done(value)} />
+            <Field value={value} onChangeText={setValue} placeholder={prompt.placeholder} autoFocus multiline={prompt.multiline} returnKeyType={prompt.multiline ? "default" : "done"} onSubmitEditing={prompt.multiline ? undefined : () => done(value)} />
             <View style={styles.row}>
               <Button small variant="ghost" label="Cancelar" onPress={() => done(null)} />
               <Button small variant="flare" label={prompt.action ?? "Guardar"} disabled={!value.trim()} onPress={() => done(value)} />
