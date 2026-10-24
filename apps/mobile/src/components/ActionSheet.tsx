@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useSheet, type SheetEntry } from "../lib/sheet";
 import { tap } from "../lib/haptics";
 import { colors, fonts } from "../lib/theme";
@@ -56,6 +56,7 @@ export function ActionSheetHost() {
                   {e.label}
                 </Text>
                 {e.hint ? <Text style={styles.hint}>{e.hint}</Text> : null}
+                {e.checked ? <Check size={16} color={colors.amber} /> : null}
                 {e.children ? <ChevronRight size={16} color={colors.paperMute} /> : null}
               </Pressable>
             ))}

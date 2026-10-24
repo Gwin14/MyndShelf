@@ -1,6 +1,7 @@
 import { AppState } from "react-native";
 import { detectKind, findFeed, hueFrom, looksLikeFeed, parseFeed } from "@myndshelf/core";
 import type { CaptureItem, Feed, FeedEntry } from "@myndshelf/types";
+import { captureText } from "./capture";
 import { fetchHtml } from "./platform";
 import { library, ready } from "./store";
 
@@ -25,14 +26,17 @@ export function entryAsItem(entry: FeedEntry, feed?: Feed): CaptureItem {
   };
 }
 
-/** Guarda a entrada como captura (uma vez só) e devolve o id dela. */
-export function saveEntry(entry: FeedEntry): string {
+/** Guarda a entrada como captura (uma vez só), relendo a página para ganhar a capa certa. */
+export async function saveEntry(entry: FeedEntry): Promise<string | undefined> {
   const s = library.getState();
   if (entry.savedAs && s.captures.some((c) => c.id === entry.savedAs)) return entry.savedAs;
-  const feed = s.feeds.find((f) => f.id === entry.feedId);
-  const { id: _id, ...item } = entryAsItem(entry, feed);
-  const id = s.addCapture({ ...item, createdAt: Date.now() });
-  s.updateEntry(entry.id, { savedAs: id, read: true });
+  let id: string | undefined;
+  if (entry.url) id = await captureText(entry.url);
+  else {
+    const { id: _id, ...item } = entryAsItem(entry, s.feeds.find((f) => f.id === entry.feedId));
+    id = s.addCapture({ ...item, createdAt: Date.now() });
+  }
+  if (id) library.getState().updateEntry(entry.id, { savedAs: id, read: true });
   return id;
 }
 

@@ -7,6 +7,7 @@ export interface SheetEntry {
   icon?: ReactNode;
   hint?: string;
   danger?: boolean;
+  checked?: boolean;
   onSelect?: () => void;
   /** submenu: abre outra lista dentro da mesma folha */
   children?: SheetEntry[];
