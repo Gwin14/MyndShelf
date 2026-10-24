@@ -41,6 +41,7 @@ export const BoardNodeView = memo(function BoardNodeView({ node, zoom, selected,
 
   const pan = usePanGesture({
     minDistance: 6,
+    maxPointers: 1,
     block: canvas,
     onActivate: () => {
       lift.value = smooth(1, FAST);
@@ -60,9 +61,14 @@ export const BoardNodeView = memo(function BoardNodeView({ node, zoom, selected,
   const gesture = useExclusiveGestures(pan, hold, tap);
 
   const style = useAnimatedStyle(() => ({
-    transform: [{ translateX: dx.value }, { translateY: dy.value }, { rotate: `${node.rotation * (1 - lift.value)}deg` }, { scale: 1 + lift.value * 0.04 }],
+    transform: [{ translateX: dx.value }, { translateY: dy.value }],
     zIndex: lift.value > 0.01 ? 100 : 1,
-    shadowOpacity: 0.4 + lift.value * 0.4,
+  }));
+  // o corpo gira levemente, como no desktop; ao arrastar ele endireita e ergue
+  const body = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${node.rotation * (1 - lift.value)}deg` }, { scale: 1 + lift.value * 0.04 }],
+    shadowOpacity: 0.55 + lift.value * 0.3,
+    shadowRadius: 14 + lift.value * 16,
   }));
 
   if (node.kind !== "text" && !capture && !creation) return null;
@@ -71,11 +77,12 @@ export const BoardNodeView = memo(function BoardNodeView({ node, zoom, selected,
     <GestureDetector gesture={gesture}>
       <Animated.View
         onLayout={(e) => onMeasure(node.id, e.nativeEvent.layout.width, e.nativeEvent.layout.height)}
-        style={[styles.node, { left: node.x + WORLD, top: node.y + WORLD, width: node.w }, selected && styles.selected, linking && styles.linking, style]}
+        style={[styles.node, { left: node.x + WORLD, top: node.y + WORLD, width: node.w }, style]}
       >
+        <Animated.View style={[styles.body, selected && styles.selected, linking && styles.linking, body]}>
         {capture && (
           <View>
-            <Cover item={capture} width={node.w - 16} />
+            <Cover item={capture} width={node.w} />
             {!SELF_CAPTIONED.has(capture.kind) && (
               <Text style={styles.caption} numberOfLines={2}>
                 {capture.title}
@@ -91,40 +98,33 @@ export const BoardNodeView = memo(function BoardNodeView({ node, zoom, selected,
             </Text>
           </View>
         )}
-        {node.kind === "text" && <Text style={styles.text}>{node.text || "…"}</Text>}
-        <View style={styles.port}>
-          <Text style={styles.portStar}>✦</Text>
-        </View>
+        {node.kind === "text" && (
+          <View style={styles.note}>
+            <View style={styles.noteStrip} />
+            <Text style={styles.noteText}>{node.text || "…"}</Text>
+          </View>
+        )}
+        </Animated.View>
+        {selected && (
+          <View style={styles.port}>
+            <Text style={styles.portStar}>✦</Text>
+          </View>
+        )}
       </Animated.View>
     </GestureDetector>
   );
 });
 
 const styles = StyleSheet.create({
-  node: {
-    position: "absolute",
-    padding: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 12 },
-  },
-  selected: { borderColor: "rgba(255,180,61,0.7)", backgroundColor: "rgba(255,180,61,0.06)" },
-  linking: { borderColor: colors.cyan, borderStyle: "dashed" },
+  node: { position: "absolute" },
+  body: { shadowColor: "#000", shadowOffset: { width: 0, height: 16 } },
+  selected: { shadowColor: colors.amber, shadowOpacity: 0.55, shadowRadius: 18, shadowOffset: { width: 0, height: 0 } },
+  linking: { shadowColor: colors.cyan, shadowOpacity: 0.7, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
   creation: { alignItems: "center", paddingTop: 10 },
-  caption: { fontFamily: fonts.display, fontSize: 16, lineHeight: 17, color: colors.paper, marginTop: 10, textAlign: "center" },
-  text: {
-    padding: 16,
-    borderRadius: 3,
-    backgroundColor: "#f3dd8a",
-    fontFamily: fonts.displayItalic,
-    fontSize: 20,
-    lineHeight: 24,
-    color: "#2a2210",
-    overflow: "hidden",
-  },
-  port: { position: "absolute", right: -8, top: "45%", width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: colors.night, borderWidth: 1, borderColor: colors.lineStrong },
+  caption: { fontFamily: fonts.display, fontSize: 16, lineHeight: 17.5, color: colors.paper, marginTop: 8, marginHorizontal: 2, textShadowColor: colors.void, textShadowRadius: 10 },
+  note: { minHeight: 110, borderRadius: 2, backgroundColor: "#efe6d2", overflow: "hidden" },
+  noteStrip: { height: 5, backgroundColor: colors.amber },
+  noteText: { paddingHorizontal: 16, paddingTop: 11, paddingBottom: 18, fontFamily: fonts.displayItalic, fontSize: 20, lineHeight: 24, color: "#1c1915" },
+  port: { position: "absolute", right: -12, top: "50%", marginTop: -12, width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.night, borderWidth: 1, borderColor: colors.amber, shadowColor: colors.amber, shadowOpacity: 0.6, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
   portStar: { color: colors.amber, fontSize: 11 },
 });
