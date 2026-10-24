@@ -16,6 +16,7 @@ import { library } from "./store";
 import { downscaleToDataUrl } from "./images";
 import { entryAsItem, subscribe } from "./feeds";
 import { useUi } from "./ui";
+import { exclusive } from "./pickers";
 import { toast } from "./toast";
 import type { FeedEntry } from "@myndshelf/types";
 
@@ -88,8 +89,8 @@ export async function captureImage(source: "library" | "camera") {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) return toast("Sem acesso à câmera.");
   }
-  const res = source === "camera" ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
-  if (res.canceled) return;
+  const res = await exclusive(() => (source === "camera" ? ImagePicker.launchCameraAsync(opts) : ImagePicker.launchImageLibraryAsync(opts)));
+  if (!res || res.canceled) return;
   for (const asset of res.assets) {
     const image = await downscaleToDataUrl(asset.uri, asset.width, asset.height);
     const name = asset.fileName?.replace(/\.[^.]+$/, "");

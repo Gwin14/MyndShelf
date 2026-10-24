@@ -16,8 +16,10 @@ export type MaybeEntry = SheetEntry | false | null | undefined | 0 | "";
 
 interface SheetState {
   sheet: { title?: string; subtitle?: string; entries: SheetEntry[] } | null;
+  /** ação escolhida, à espera de o modal sumir (seletores do sistema não abrem por cima de um modal saindo) */
+  pending: (() => void) | null;
   open(entries: MaybeEntry[], title?: string, subtitle?: string): void;
-  close(): void;
+  close(then?: () => void): void;
 }
 
 export const clean = (entries: MaybeEntry[]) => entries.filter(Boolean) as SheetEntry[];
@@ -25,11 +27,12 @@ export const clean = (entries: MaybeEntry[]) => entries.filter(Boolean) as Sheet
 /** Folha de ações — o menu de contexto do desktop, aberto por toque longo. */
 export const useSheet = create<SheetState>((set) => ({
   sheet: null,
+  pending: null,
   open(entries, title, subtitle) {
     press();
-    set({ sheet: { entries: clean(entries), title, subtitle } });
+    set({ sheet: { entries: clean(entries), title, subtitle }, pending: null });
   },
-  close: () => set({ sheet: null }),
+  close: (then) => set({ sheet: null, pending: then ?? null }),
 }));
 
 export const openSheet = (entries: MaybeEntry[], title?: string, subtitle?: string) => useSheet.getState().open(entries, title, subtitle);

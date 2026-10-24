@@ -6,6 +6,7 @@ import { BackupError, backupCounts, mergeLibrary, parseBackup, serializeLibrary 
 import type { LibraryData } from "@myndshelf/types";
 import { success } from "./haptics";
 import { library } from "./store";
+import { exclusive } from "./pickers";
 import { toast } from "./toast";
 
 const data = (): LibraryData => {
@@ -25,8 +26,8 @@ export async function exportLibrary() {
 }
 
 export async function importLibrary() {
-  const res = await DocumentPicker.getDocumentAsync({ type: ["application/json", "text/plain", "*/*"], copyToCacheDirectory: true });
-  if (res.canceled) return;
+  const res = await exclusive(() => DocumentPicker.getDocumentAsync({ type: ["application/json", "text/plain", "*/*"], copyToCacheDirectory: true }));
+  if (!res || res.canceled) return;
   let backup;
   try {
     backup = parseBackup(await new File(res.assets[0].uri).text());

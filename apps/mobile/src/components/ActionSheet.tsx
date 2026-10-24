@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { BASE, EASE } from "../lib/motion";
@@ -13,15 +13,34 @@ export function ActionSheetHost() {
   const close = useSheet((s) => s.close);
   const insets = useSafeAreaInsets();
   const [stack, setStack] = useState<{ label: string; entries: SheetEntry[] }[]>([]);
+  // o modal fica montado enquanto some, mostrando a última folha
+  const last = useRef(sheet);
+  if (sheet) last.current = sheet;
   useEffect(() => setStack([]), [sheet]);
-  if (!sheet) return null;
+
+  // roda a ação escolhida quando o modal termina de sair; o timer cobre plataformas sem onDismiss
+  const flush = () => {
+    const run = useSheet.getState().pending;
+    if (!run) return;
+    useSheet.setState({ pending: null });
+    run();
+  };
+  const pending = useSheet((s) => s.pending);
+  useEffect(() => {
+    if (!pending) return;
+    const t = setTimeout(flush, 450);
+    return () => clearTimeout(t);
+  }, [pending]);
+
+  const shown = sheet ?? last.current;
+  if (!shown) return null;
   const level = stack[stack.length - 1];
-  const entries = level?.entries ?? sheet.entries;
+  const entries = level?.entries ?? shown.entries;
 
   return (
-    <Modal transparent visible animationType="none" onRequestClose={close} statusBarTranslucent navigationBarTranslucent>
+    <Modal transparent visible={!!sheet} animationType="fade" onDismiss={flush} onRequestClose={() => close()} statusBarTranslucent navigationBarTranslucent>
       <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)} style={StyleSheet.absoluteFill}>
-        <Pressable style={styles.backdrop} onPress={close} />
+        <Pressable style={styles.backdrop} onPress={() => close()} />
       </Animated.View>
       <View style={styles.dock} pointerEvents="box-none">
         <Animated.View entering={SlideInDown.duration(BASE).easing(EASE)} exiting={SlideOutDown.duration(180)} style={[styles.panel, { paddingBottom: insets.bottom + 12 }]}>
@@ -31,12 +50,12 @@ export function ActionSheetHost() {
               <ChevronLeft size={16} color={colors.paperDim} />
               <Text style={styles.title}>{level.label}</Text>
             </Pressable>
-          ) : sheet.title ? (
+          ) : shown.title ? (
             <View style={styles.head}>
               <Text style={styles.title} numberOfLines={2}>
-                {sheet.title}
+                {shown.title}
               </Text>
-              {sheet.subtitle ? <Text style={styles.subtitle}>{sheet.subtitle}</Text> : null}
+              {shown.subtitle ? <Text style={styles.subtitle}>{shown.subtitle}</Text> : null}
             </View>
           ) : null}
           <ScrollView style={styles.list} bounces={false}>
@@ -47,9 +66,7 @@ export function ActionSheetHost() {
                 onPress={() => {
                   tap();
                   if (e.children) return setStack((s) => [...s, { label: e.label, entries: e.children! }]);
-                  close();
-                  // deixa a folha sair antes de abrir outra tela/folha
-                  setTimeout(() => e.onSelect?.(), 60);
+                  close(e.onSelect);
                 }}
               >
                 <View style={styles.icon}>{e.icon}</View>

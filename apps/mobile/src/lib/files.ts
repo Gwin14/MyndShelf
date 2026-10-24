@@ -6,6 +6,7 @@ import { isCodeFile, mediumFromFile, titleFromFileName } from "@myndshelf/core";
 import type { Creation } from "@myndshelf/types";
 import { downscaleToDataUrl } from "./images";
 import { library } from "./store";
+import { exclusive } from "./pickers";
 import { toast } from "./toast";
 
 /** Arquivos originais da Estante ficam na pasta do app, um por criação. */
@@ -74,8 +75,8 @@ export async function addCreationFromAsset(asset: { uri: string; name: string; m
 
 /** Arquivos de qualquer tipo (Arquivos/iCloud/Drive). */
 export async function pickFiles(shelfId: string | null = null) {
-  const res = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
-  if (res.canceled) return [];
+  const res = await exclusive(() => DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true }));
+  if (!res || res.canceled) return [];
   const ids: string[] = [];
   for (const a of res.assets) ids.push(await addCreationFromAsset({ uri: a.uri, name: a.name, mimeType: a.mimeType, size: a.size }, shelfId));
   return ids;
@@ -83,8 +84,8 @@ export async function pickFiles(shelfId: string | null = null) {
 
 /** Fotos e vídeos da galeria. */
 export async function pickMedia(shelfId: string | null = null) {
-  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images", "videos"], allowsMultipleSelection: true, quality: 1 });
-  if (res.canceled) return [];
+  const res = await exclusive(() => ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images", "videos"], allowsMultipleSelection: true, quality: 1 }));
+  if (!res || res.canceled) return [];
   const ids: string[] = [];
   for (const a of res.assets) {
     const ext = a.type === "video" ? "mp4" : "jpg";
