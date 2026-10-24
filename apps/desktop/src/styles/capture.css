@@ -54,14 +54,28 @@
   color: var(--c-paper-mute);
   font-style: italic;
 }
-.addbar-kbd {
+.addbar-keys {
   align-self: center;
+  display: flex;
+  gap: 6px;
+  opacity: 0.55;
+  transition: opacity var(--t-base) var(--ease);
+}
+.addbar-keys kbd {
   padding: 5px 8px;
   border-radius: 6px;
   border: 1px solid var(--c-line);
   color: var(--c-paper-mute);
+  font: inherit;
   font-size: 9.5px;
   white-space: nowrap;
+}
+.addbar[data-filled] .addbar-keys {
+  opacity: 1;
+}
+.addbar[data-filled] .addbar-keys kbd {
+  border-color: var(--c-line-strong);
+  color: var(--c-paper-dim);
 }
 
 /* ── mural ── */

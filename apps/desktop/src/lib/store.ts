@@ -3,7 +3,7 @@ import { createLibraryStore, type LibraryState } from "@myndshelf/core";
 import { createStore as createIdb, del, get, set } from "idb-keyval";
 import type { StateStorage } from "zustand/middleware";
 
-const kv = createIdb("myndshelf", "kv");
+export const kv = createIdb("myndshelf", "kv");
 const files = createIdb("myndshelf-files", "blobs");
 
 const idbStorage: StateStorage = {

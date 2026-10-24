@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Code2, Download, ExternalLink, Eye, Globe, Minus, Moon, Plus, RotateCw, ShieldCheck, Sun, X } from "lucide-react";
+import { ArrowLeft, Code2, Download, ExternalLink, Eye, Globe, Minus, Moon, Plus, RotateCw, ScanText, ShieldCheck, Sun, X } from "lucide-react";
 import type { Creation } from "@myndshelf/types";
 import { docLabel, docKindOf, loadDocContent, openPdf, pdfCover, type DocContent, type DocKind } from "../../lib/documents";
 import { openExternal } from "../../lib/platform";
 import { buildSandboxDoc, OPEN_LINK_MESSAGE, SANDBOX_FLAGS, type SandboxDoc } from "../../lib/sandbox";
 import { fileStore, library } from "../../lib/store";
+import { Prose } from "../../components/Prose";
+import { RunOutput } from "../../components/RunOutput";
+import { analyzeCreation, useAiRun } from "../../lib/ai";
 
 type PdfDoc = Awaited<ReturnType<typeof openPdf>>;
 
@@ -14,6 +17,13 @@ export function DocumentViewer({ item, onClose }: { item: Creation; onClose: () 
   const kind = docKindOf(item)!;
   const [blob, setBlob] = useState<Blob | null | undefined>(undefined);
   const [blobUrl, setBlobUrl] = useState<string>();
+  // aberto = painel visível; montado continua true durante a animação de saída
+  const [panel, setPanel] = useState(false);
+  const [panelMounted, setPanelMounted] = useState(false);
+  const togglePanel = () => {
+    if (!panel) setPanelMounted(true);
+    setPanel(!panel);
+  };
 
   useEffect(() => {
     let url: string | undefined;
@@ -42,7 +52,7 @@ export function DocumentViewer({ item, onClose }: { item: Creation; onClose: () 
   }, [onClose]);
 
   return createPortal(
-    <div className="viewer viewer-doc" style={{ "--hue": item.hue } as CSSProperties}>
+    <div className="viewer viewer-doc" data-panel={panel || undefined} style={{ "--hue": item.hue } as CSSProperties}>
       <header className="viewer-bar">
         <button className="btn" onClick={onClose}>
           <ArrowLeft size={14} /> Voltar
@@ -50,13 +60,18 @@ export function DocumentViewer({ item, onClose }: { item: Creation; onClose: () 
         <span className="mono viewer-host">
           {docLabel(kind, item.fileName)} · {item.fileName}
         </span>
-        {blobUrl ? (
-          <a className="btn" href={blobUrl} download={item.fileName}>
-            <Download size={14} /> Exportar
-          </a>
-        ) : (
-          <span />
-        )}
+        <span className="viewer-actions">
+          {blob && (
+            <button className="btn" aria-pressed={panel} onClick={togglePanel}>
+              <ScanText size={14} /> Analisar
+            </button>
+          )}
+          {blobUrl && (
+            <a className="btn" href={blobUrl} download={item.fileName}>
+              <Download size={14} /> Exportar
+            </a>
+          )}
+        </span>
       </header>
 
       {blob === null && (
@@ -67,8 +82,45 @@ export function DocumentViewer({ item, onClose }: { item: Creation; onClose: () 
       {blob && kind === "pdf" && <PdfPages blob={blob} />}
       {blob && kind === "html" && <HtmlPreview item={item} blob={blob} />}
       {blob && kind !== "pdf" && kind !== "html" && <DocReader item={item} kind={kind} blob={blob} />}
+      {panelMounted && <DocPanel item={item} open={panel} onClose={() => setPanel(false)} onGone={() => setPanelMounted(false)} />}
     </div>,
     document.body,
+  );
+}
+
+/* ───────────────────────── leitura do documento ───────────────────────── */
+
+function DocPanel({ item, open, onClose, onGone }: { item: Creation; open: boolean; onClose: () => void; onGone: () => void }) {
+  const analysis = useAiRun();
+  const busy = analysis.state.status === "thinking" || analysis.state.status === "streaming";
+  const analyze = () => void analysis.run((onText, signal) => analyzeCreation(item, onText, signal));
+
+  // a primeira abertura já lê o documento; depois fica guardado
+  useEffect(() => {
+    if (!item.analysis) analyze();
+  }, [item.id]);
+
+  return (
+    <aside className="doc-panel" data-closing={!open || undefined} onAnimationEnd={(e) => !open && e.target === e.currentTarget && onGone()}>
+      <header className="doc-panel-head">
+        <p className="kicker">Leitura</p>
+        {item.analysis && !busy && (
+          <button className="icon-btn" onClick={analyze} title="Ler de novo">
+            <RotateCw size={13} />
+          </button>
+        )}
+        <button className="icon-btn" onClick={onClose} title="Fechar">
+          <X size={15} />
+        </button>
+      </header>
+      <div className="doc-panel-body">
+        {analysis.state.status === "idle" && item.analysis ? (
+          <Prose text={item.analysis} />
+        ) : (
+          <RunOutput state={analysis.state} label="lendo o documento" onRetry={analysis.retry} />
+        )}
+      </div>
+    </aside>
   );
 }
 

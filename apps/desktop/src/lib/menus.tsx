@@ -21,6 +21,7 @@ import {
   Radio,
   RefreshCw,
   Search,
+  Settings2,
   Shapes,
   Sparkles,
   Star,
@@ -391,13 +392,14 @@ export function sectionMenu(): Maybe[] {
     icon: <Sparkles size={S} />,
     children: GO.map((g) => ({ label: g.label, hint: g.key, checked: section === g.id, onSelect: () => set({ section: g.id }) })),
   };
+  const settings: MenuEntry = { label: "Ajustes…", icon: <Settings2 size={S} />, hint: "⌘,", onSelect: () => set({ settingsOpen: true }) };
 
   if (section === "capture") {
     return [
       {
         label: "Nova nota ou link",
         icon: <Plus size={S} />,
-        hint: "↵",
+        hint: "⇧↵",
         onSelect: () => {
           set({ captureFeed: null });
           window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".addbar textarea")?.focus(), 50);
@@ -426,6 +428,7 @@ export function sectionMenu(): Maybe[] {
       lib().feeds.length > 0 && { label: "Todas as transmissões", icon: <Radio size={S} />, onSelect: () => set({ captureFeed: "all" }) },
       sep,
       goTo,
+      settings,
     ];
   }
 
@@ -445,6 +448,7 @@ export function sectionMenu(): Maybe[] {
       { label: "Só a vitrine", icon: <Star size={S} />, checked: ui().shelfFilter === "featured", onSelect: () => set({ shelfFilter: ui().shelfFilter === "featured" ? "all" : "featured" }) },
       sep,
       goTo,
+      settings,
     ];
   }
 
@@ -458,6 +462,7 @@ export function sectionMenu(): Maybe[] {
     active && { label: "Todos os projetos", icon: <Orbit size={S} />, onSelect: () => set({ activeProjectId: null }) },
     sep,
     goTo,
+    settings,
   ];
 }
 

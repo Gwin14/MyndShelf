@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Copy, ExternalLink, Minus, Moon, Plus, Sun } from "lucide-react";
+import { AlignLeft, ArrowLeft, Copy, ExternalLink, Minus, Moon, Plus, Sun } from "lucide-react";
 import { formatCoords, getEmbed, hostOf, mapLinks, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
+import { RunOutput } from "../../components/RunOutput";
+import { summarizeCapture, useAiRun } from "../../lib/ai";
 import { openExternal } from "../../lib/platform";
 import { loadArticle, type Article } from "../../lib/reader";
 import { Cover } from "./covers/Cover";
@@ -155,6 +157,15 @@ function Reader({ item }: { item: CaptureItem }) {
   const [size, setSize] = useState(() => Number(localStorage.getItem("reader-size")) || 19);
   const [progress, setProgress] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
+  const [showSummary, setShowSummary] = useState(false);
+  const summary = useAiRun();
+
+  const toggleSummary = () => {
+    const next = !showSummary;
+    setShowSummary(next);
+    if (next && summary.state.status === "idle") void summary.run((onText, signal) => summarizeCapture(item, onText, signal));
+    if (next) scroller.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     let alive = true;
@@ -203,6 +214,9 @@ function Reader({ item }: { item: CaptureItem }) {
         <button className="icon-btn" onClick={() => setPaper((p) => !p)} title={paper ? "Modo noite" : "Modo papel"}>
           {paper ? <Moon size={14} /> : <Sun size={14} />}
         </button>
+        <button className="icon-btn" aria-pressed={showSummary} onClick={toggleSummary} title="Resumo">
+          <AlignLeft size={14} />
+        </button>
       </div>
 
       <div className="reader-scroll" ref={scroller} onScroll={onScroll}>
@@ -214,6 +228,13 @@ function Reader({ item }: { item: CaptureItem }) {
           <h1 className="reader-title">{article?.title || item.title}</h1>
           {(article?.byline || item.author) && <p className="reader-byline">{article?.byline || item.author}</p>}
           <hr className="reader-rule" />
+
+          {showSummary && (
+            <aside className="reader-summary">
+              <p className="kicker">Resumo</p>
+              <RunOutput state={summary.state} label="resumindo" onRetry={summary.retry} />
+            </aside>
+          )}
 
           {state.status === "loading" && (
             <div className="reader-loading">

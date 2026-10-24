@@ -9,6 +9,7 @@ import { useUi } from "../../lib/ui";
 import { AddBar } from "./AddBar";
 import { CaptureCard } from "./CaptureCard";
 import { FeedView } from "./FeedView";
+import { LibraryAnswer } from "./LibraryAnswer";
 
 /** Altura aproximada de cada capa (em larguras de coluna), para equilibrar as colunas. */
 function estimateHeight(item: CaptureItem): number {
@@ -52,6 +53,7 @@ export function CaptureView() {
   const { captureKind, captureTag, captureQuery, captureFeed, set } = useUi();
   const [dragging, setDragging] = useState(false);
   const nativeDrag = useUi((s) => s.nativeDrag);
+  const libraryQuestion = useUi((s) => s.libraryQuestion);
 
   const items = useMemo(() => {
     const q = captureQuery.trim().toLowerCase();
@@ -107,6 +109,8 @@ export function CaptureView() {
 
       <AddBar />
 
+      {libraryQuestion && <LibraryAnswer key={libraryQuestion.n} question={libraryQuestion.q} />}
+
       {items.length ? (
         <Masonry
           items={items}
@@ -123,6 +127,12 @@ export function CaptureView() {
             />
           )}
         />
+      ) : captureQuery.trim() ? (
+        <div className="empty">
+          <div className="empty-orbit" />
+          <p className="empty-title">Nada no céu com “{captureQuery.trim().slice(0, 40)}”.</p>
+          <p>⇥ para perguntar ao acervo · ⇧↵ para guardar como nota</p>
+        </div>
       ) : (
         <div className="empty">
           <div className="empty-orbit" />

@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { BookOpen, Expand, ExternalLink, MapPin, Play, Radio, RefreshCw, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlignLeft, BookOpen, Expand, ExternalLink, MapPin, Play, Radio, RefreshCw, Trash2 } from "lucide-react";
 import { describeFeedSource, KIND_LABELS, relativeDate, VIEW_LABELS, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem, CaptureKind } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
 import { Modal } from "../../components/Modal";
+import { Smooth } from "../../components/Prose";
+import { RunOutput, Thinking } from "../../components/RunOutput";
+import { canSummarizeCapture, suggestTags, summarizeCapture, useAi, useAiRun, useGlow, warmCapture } from "../../lib/ai";
 import { refreshCapture } from "../../lib/capture";
 import { subscribe } from "../../lib/feeds";
 import { openExternal } from "../../lib/platform";
@@ -16,7 +19,16 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
   const [tagDraft, setTagDraft] = useState("");
   const setUi = useUi((s) => s.set);
   const [follow, setFollow] = useState<{ state: "idle" | "busy" | "error"; msg?: string }>({ state: "idle" });
+  const summary = useAiRun();
+  const working = useGlow((s) => !!s.working[id]);
+  const fresh = useGlow((s) => s.fresh);
+  const hasKey = useAi((s) => !!s.key);
+  useEffect(() => {
+    const it = library.getState().captures.find((c) => c.id === id);
+    if (it) warmCapture(it);
+  }, [id]);
   if (!item) return null;
+  const summarizing = summary.state.status === "thinking" || summary.state.status === "streaming";
   const source = item.url ? describeFeedSource(item.url) : undefined;
   const canFollow = !!item.url && !source?.unsupported && (!!source || ["article", "link", "code", "podcast", "video"].includes(item.kind));
   const followFeed = async () => {
@@ -72,6 +84,17 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
           )}
           {item.description && <p className="detail-desc">{item.description}</p>}
 
+          <Smooth>
+            {summary.state.status !== "idle" && (
+              <>
+                <label className="label mono">Resumo</label>
+                <div className="detail-summary">
+                  <RunOutput state={summary.state} label="resumindo" onRetry={summary.retry} />
+                </div>
+              </>
+            )}
+          </Smooth>
+
           <label className="label mono">{item.kind === "note" ? "Texto" : "Anotação"}</label>
           <textarea
             className="field"
@@ -83,10 +106,31 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
           <label className="label mono">Etiquetas</label>
           <div className="tags">
             {item.tags.map((t) => (
-              <button key={t} className="tag" onClick={() => update({ tags: item.tags.filter((x) => x !== t) })}>
+              <button
+                key={t}
+                className="tag"
+                data-glow={fresh[`${id}:tag:${t}`] || undefined}
+                onClick={() => update({ tags: item.tags.filter((x) => x !== t) })}
+              >
                 {t} <span>×</span>
               </button>
             ))}
+            {working ? (
+              <span className="tag tag-working">
+                <Thinking label="lendo" />
+              </span>
+            ) : (
+              item.tags.length < 5 &&
+              item.status === "ready" && (
+                <button
+                  className="tag tag-suggest"
+                  title="Sugerir etiquetas a partir do conteúdo"
+                  onClick={() => (hasKey ? void suggestTags(id).catch(() => {}) : setUi({ settingsOpen: true }))}
+                >
+                  ✦ sugerir
+                </button>
+              )
+            )}
             <input
               className="tag-input"
               placeholder="+ etiqueta"
@@ -121,6 +165,15 @@ export function CaptureDetail({ id, onClose }: { id: string; onClose: () => void
                   <RefreshCw size={14} />
                 </button>
               </>
+            )}
+            {canSummarizeCapture(item) && (
+              <button
+                className="btn"
+                disabled={summarizing}
+                onClick={() => summary.run((onText, signal) => summarizeCapture(item, onText, signal))}
+              >
+                <AlignLeft size={14} /> {summarizing ? "Resumindo…" : summary.state.status === "done" ? "Resumir de novo" : "Resumir"}
+              </button>
             )}
             {canFollow && (
               <button className="btn" onClick={followFeed} disabled={follow.state === "busy"} title={source ? `Seguir: ${source.label}` : "Seguir o feed deste site"}>

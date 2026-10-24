@@ -1,15 +1,27 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ImagePlus } from "lucide-react";
 import { captureImageFile, captureText } from "../../lib/capture";
 import { pickFiles } from "../../lib/files";
+import { useUi } from "../../lib/ui";
 
+/**
+ * Um campo só para as três coisas: digitar já filtra o mural,
+ * Tab pergunta ao acervo e ⇧↵ guarda como nota (ou link).
+ */
 export function AddBar() {
-  const [value, setValue] = useState("");
+  const value = useUi((s) => s.captureQuery);
+  const set = useUi((s) => s.set);
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  const submit = () => {
-    void captureText(value);
-    setValue("");
+  const fit = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+  const clear = () => {
+    set({ captureQuery: "" });
+    requestAnimationFrame(fit);
   };
 
   return (
@@ -21,17 +33,25 @@ export function AddBar() {
         ref={ref}
         rows={1}
         value={value}
-        placeholder="Cole um link, solte uma imagem ou escreva um pensamento…"
+        placeholder="Busque, pergunte ou escreva algo…"
         onChange={(e) => {
-          setValue(e.target.value);
-          e.target.style.height = "auto";
-          e.target.style.height = `${e.target.scrollHeight}px`;
+          set({ captureQuery: e.target.value });
+          fit();
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
+          const text = value.trim();
+          if (e.key === "Enter" && e.shiftKey) {
             e.preventDefault();
-            submit();
-            e.currentTarget.style.height = "auto";
+            if (!text) return;
+            void captureText(value);
+            clear();
+          } else if (e.key === "Tab" && !e.shiftKey && text) {
+            e.preventDefault();
+            set({ libraryQuestion: { q: text, n: Date.now() } });
+            clear();
+          } else if (e.key === "Escape" && value) {
+            e.stopPropagation();
+            clear();
           }
         }}
       />
@@ -42,7 +62,10 @@ export function AddBar() {
       >
         <ImagePlus size={17} />
       </button>
-      <kbd className="addbar-kbd mono">↵ guardar</kbd>
+      <span className="addbar-keys mono" aria-hidden>
+        <kbd>⇥ perguntar</kbd>
+        <kbd>⇧↵ guardar</kbd>
+      </span>
     </div>
   );
 }

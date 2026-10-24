@@ -18,6 +18,17 @@ export async function migrate() {
     }
   }
 
+  if (!(await flags.get("drop-summaries-1"))) {
+    await flags.set("drop-summaries-1");
+    // resumos agora vivem só enquanto o item está aberto
+    const strip = <T extends object>(x: T) => {
+      if (!("summary" in x)) return x;
+      const { summary: _, ...rest } = x as T & { summary?: string };
+      return rest as T;
+    };
+    library.setState((s) => ({ captures: s.captures.map(strip), creations: s.creations.map(strip) }));
+  }
+
   if (!(await flags.get("code-medium-1"))) {
     await flags.set("code-medium-1");
     // arquivos de código guardados como "texto"/"objeto" viram disquetes

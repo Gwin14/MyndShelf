@@ -72,6 +72,21 @@ export async function pdfCover(blob: Blob, width = 520): Promise<string | undefi
   }
 }
 
+/** Texto corrido das primeiras páginas; vazio quando o PDF é só imagem (escaneado). */
+export async function pdfText(blob: Blob, maxPages = 40): Promise<string> {
+  const doc = await openPdf(blob);
+  try {
+    const pages: string[] = [];
+    for (let i = 1; i <= Math.min(doc.numPages, maxPages); i++) {
+      const content = await (await doc.getPage(i)).getTextContent();
+      pages.push(content.items.map((it) => ("str" in it ? it.str : "")).join(" "));
+    }
+    return pages.join("\n\n").replace(/[ \t]+/g, " ").trim();
+  } finally {
+    void doc.loadingTask.destroy();
+  }
+}
+
 /* ───────────────────────── texto e afins ───────────────────────── */
 
 export type DocContent =

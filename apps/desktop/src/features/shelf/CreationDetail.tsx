@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Download, FolderOpen, Search, Star, Trash2 } from "lucide-react";
+import { AlignLeft, BookOpen, Download, FolderOpen, Search, Star, Trash2 } from "lucide-react";
 import { formatBytes, MEDIUM_LABELS } from "@myndshelf/core";
 import type { Creation, CreationMedium } from "@myndshelf/types";
 import { AddToProject } from "../../components/AddToProject";
 import { Modal } from "../../components/Modal";
+import { Smooth } from "../../components/Prose";
+import { RunOutput } from "../../components/RunOutput";
+import { canReadCreation, summarizeCreation, useAiRun } from "../../lib/ai";
 import { FILE_MANAGER, isTauri, openPath } from "../../lib/platform";
 import { fileStore, library, useLibrary } from "../../lib/store";
 import { docKindOf, docLabel } from "../../lib/documents";
@@ -31,7 +34,10 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
   const blobUrl = useBlobUrl(id);
   const [reading, setReading] = useState(false);
   const [pathError, setPathError] = useState<string>();
+  const summary = useAiRun();
   if (!item) return null;
+  const summarizing = summary.state.status === "thinking" || summary.state.status === "streaming";
+  const canSummarize = canReadCreation(item) && item.medium !== "image";
   const docKind = docKindOf(item);
   const isFolder = item.medium === "folder";
   const openOriginal = (reveal: boolean) =>
@@ -84,6 +90,17 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
           </p>
           <input className="detail-title" value={item.title} onChange={(e) => update({ title: e.target.value })} />
           <p className="detail-sub">{item.fileName}</p>
+
+          <Smooth>
+            {summary.state.status !== "idle" && (
+              <>
+                <label className="label mono">Resumo</label>
+                <div className="detail-summary">
+                  <RunOutput state={summary.state} label="resumindo" onRetry={summary.retry} />
+                </div>
+              </>
+            )}
+          </Smooth>
 
           <div className="row-2">
             <div>
@@ -151,6 +168,15 @@ export function CreationDetail({ id, onClose }: { id: string; onClose: () => voi
             {docKind && (
               <button className="btn btn-flare" onClick={() => setReading(true)}>
                 <BookOpen size={14} /> Abrir {docLabel(docKind, item.fileName)}
+              </button>
+            )}
+            {canSummarize && (
+              <button
+                className="btn"
+                disabled={summarizing}
+                onClick={() => summary.run((onText, signal) => summarizeCreation(item, onText, signal))}
+              >
+                <AlignLeft size={14} /> {summarizing ? "Resumindo…" : summary.state.status === "done" ? "Resumir de novo" : "Resumir"}
               </button>
             )}
             <button

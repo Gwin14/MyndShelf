@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ContextMenu } from "./components/ContextMenu";
+import { Settings } from "./components/Settings";
 import { ToastHost } from "./components/Toast";
 import { clean, sep, useContextMenu } from "./lib/contextMenu";
 import { sectionMenu, selectionMenu } from "./lib/menus";
@@ -16,6 +17,7 @@ import { ShelfSidebar } from "./features/shelf/ShelfSidebar";
 import { ShelfView } from "./features/shelf/ShelfView";
 import { ProjectsSidebar } from "./features/projects/ProjectsSidebar";
 import { ProjectsView } from "./features/projects/ProjectsView";
+import { startAutoTag } from "./lib/ai";
 import { startNativeDrop } from "./lib/nativeDrop";
 import { startQuickDropReceiver } from "./lib/quickDrop";
 import { useUi, type Section } from "./lib/ui";
@@ -25,12 +27,13 @@ const KEYS: Record<string, Section> = { "1": "capture", "2": "shelf", "3": "proj
 export function App() {
   const section = useUi((s) => s.section);
   const setSection = useUi((s) => s.setSection);
-  const { openCaptureId, viewerCaptureId, openCreationId, readingCreationId, set } = useUi();
+  const { openCaptureId, viewerCaptureId, openCreationId, readingCreationId, settingsOpen, set } = useUi();
   const viewerItem = useLibrary((s) => s.captures.find((c) => c.id === viewerCaptureId));
   const readingItem = useLibrary((s) => s.creations.find((c) => c.id === readingCreationId));
 
   useEffect(() => startNativeDrop(), []);
   useEffect(() => startQuickDropReceiver(), []);
+  useEffect(() => startAutoTag(), []);
 
   // clique direito em qualquer lugar sem menu próprio: ações da seção (ou da seleção de texto)
   useEffect(() => {
@@ -60,6 +63,10 @@ export function App() {
         e.preventDefault();
         setSection(KEYS[e.key]);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault();
+        useUi.getState().set({ settingsOpen: true });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -87,6 +94,7 @@ export function App() {
       {viewerCaptureId && <Viewer item={viewerItem} onClose={() => set({ viewerCaptureId: null })} />}
       {openCreationId && <CreationDetail id={openCreationId} onClose={() => set({ openCreationId: null })} />}
       {readingItem && <DocumentViewer item={readingItem} onClose={() => set({ readingCreationId: null })} />}
+      {settingsOpen && <Settings onClose={() => set({ settingsOpen: false })} />}
       <ContextMenu />
       <ToastHost />
     </div>

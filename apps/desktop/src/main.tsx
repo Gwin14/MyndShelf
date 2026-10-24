@@ -18,6 +18,7 @@ import "./styles/viewer.css";
 import "./styles/feeds.css";
 import "./styles/dropzone.css";
 import "./styles/contextmenu.css";
+import "./styles/answers.css";
 
 const root = createRoot(document.getElementById("root")!);
 

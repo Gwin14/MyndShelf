@@ -1,6 +1,7 @@
 import { BookOpen, Expand, MapPin, Play } from "lucide-react";
 import { VIEW_LABELS, viewModeOf, type ViewMode } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
+import { useGlow } from "../../lib/ai";
 import { menu } from "../../lib/contextMenu";
 import { captureMenu } from "../../lib/menus";
 import { Cover, SELF_CAPTIONED } from "./covers/Cover";
@@ -24,10 +25,14 @@ export function CaptureCard({
   onView: () => void;
 }) {
   const mode = item.status === "ready" ? viewModeOf(item) : undefined;
+  const working = useGlow((s) => !!s.working[item.id]);
+  const glow = useGlow((s) => !!s.fresh[`${item.id}:card`]);
   return (
     <article
       className="card"
       data-kind={item.kind}
+      data-working={working || undefined}
+      data-glow={glow || undefined}
       style={{ animationDelay: `${Math.min(index, 16) * 35}ms` }}
       onClick={onOpen}
       onContextMenu={menu(() => captureMenu(item))}

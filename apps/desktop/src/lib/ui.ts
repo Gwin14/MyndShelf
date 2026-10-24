@@ -14,6 +14,8 @@ interface UiState {
   captureFeed: string | null;
   openCaptureId: string | null;
   viewerCaptureId: string | null;
+  /** pergunta sobre o acervo inteiro, feita pela busca (n muda a cada envio) */
+  libraryQuestion: { q: string; n: number } | null;
 
   shelfView: "shelf" | "gallery";
   shelfFilter: string; // "all" | "featured" | "loose" | shelfId
@@ -26,6 +28,8 @@ interface UiState {
 
   /** algo está sendo arrastado do sistema para a janela (desktop) */
   nativeDrag: boolean;
+
+  settingsOpen: boolean;
 
   set(patch: Partial<UiState>): void;
 }
@@ -40,6 +44,7 @@ export const useUi = create<UiState>((set) => ({
   captureFeed: null,
   openCaptureId: null,
   viewerCaptureId: null,
+  libraryQuestion: null,
 
   shelfView: "shelf",
   shelfFilter: "all",
@@ -50,6 +55,8 @@ export const useUi = create<UiState>((set) => ({
   activeProjectId: null,
 
   nativeDrag: false,
+
+  settingsOpen: false,
 
   set: (patch) => set(patch),
 }));

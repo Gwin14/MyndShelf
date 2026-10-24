@@ -1,0 +1,565 @@
+/* Textos gerados (resumos, respostas, leituras) e os campos que os pedem.
+   Mesma linguagem do resto: serif editorial, mono para rótulos, labareda só no essencial. */
+
+/* ── texto que chega aos poucos ── */
+
+.prose {
+  font-family: "Newsreader Variable", Georgia, serif;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--c-paper);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.prose-block {
+  animation: prose-in var(--t-slow) var(--ease) both;
+}
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 0.75em;
+}
+.prose-block:last-child > :last-child {
+  margin-bottom: 0;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.2em;
+}
+.prose li {
+  margin: 0.2em 0;
+}
+.prose li::marker {
+  color: var(--c-amber);
+}
+.prose strong {
+  font-weight: 600;
+  color: var(--c-sun);
+}
+.prose code {
+  font-family: var(--f-mono);
+  font-size: 0.82em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(239, 230, 210, 0.08);
+}
+.prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 180, 61, 0.5);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+/* enquanto escreve, a estrela do app pulsa no fim do texto */
+.prose[data-writing] .prose-block:last-child > :last-child::after {
+  content: "✦";
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.75em;
+  color: var(--c-amber);
+  text-shadow: 0 0 10px var(--c-amber), 0 0 22px rgba(255, 90, 36, 0.6);
+  animation: spark 1.6s ease-in-out infinite;
+}
+@keyframes spark {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.8) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(45deg);
+  }
+}
+@keyframes prose-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(6px);
+  }
+}
+/* terminou de escrever: uma luz atravessa o texto uma vez */
+.prose {
+  position: relative;
+}
+.prose[data-settled]::after {
+  content: "";
+  position: absolute;
+  inset: -4px -8px;
+  pointer-events: none;
+  border-radius: 8px;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 241, 184, 0.22) 47%, rgba(255, 180, 61, 0.16) 53%, transparent 65%);
+  background-size: 260% 100%;
+  background-position: 120% 0;
+  mix-blend-mode: screen;
+  animation: sweep 1.4s var(--ease) forwards;
+}
+@keyframes sweep {
+  to {
+    background-position: -40% 0;
+    opacity: 0;
+  }
+}
+
+/* item citado numa resposta: abre o item */
+.ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(100%, 300px);
+  margin: 0 1px;
+  padding: 0 9px 0 7px;
+  height: 22px;
+  vertical-align: 1px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-line-strong);
+  background: rgba(239, 230, 210, 0.04);
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  color: var(--c-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color var(--t-fast), background var(--t-fast), transform var(--t-fast) var(--spring);
+}
+.ref::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: hsl(var(--hue) 80% 62%);
+  box-shadow: 0 0 8px hsl(var(--hue) 80% 62% / 0.7);
+}
+.ref:hover {
+  border-color: hsl(var(--hue) 80% 62% / 0.7);
+  background: hsl(var(--hue) 80% 62% / 0.1);
+  transform: translateY(-1px);
+}
+
+/* ── esperando: três estrelas cintilando e o rótulo atravessado por luz ── */
+
+.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0;
+  animation: fade-in var(--t-slow) var(--ease);
+}
+.thinking-stars {
+  display: inline-flex;
+  gap: 3px;
+  font-size: 9px;
+  color: var(--c-amber);
+}
+.thinking-stars i {
+  font-style: normal;
+  text-shadow: 0 0 8px var(--c-amber);
+  animation: twinkle-star 1.4s ease-in-out infinite;
+}
+.thinking-stars i:nth-child(2) {
+  animation-delay: 0.18s;
+  color: var(--c-sun);
+}
+.thinking-stars i:nth-child(3) {
+  animation-delay: 0.36s;
+  color: var(--c-ember);
+}
+@keyframes twinkle-star {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+.thinking-label {
+  background: linear-gradient(90deg, var(--c-paper-mute) 0%, var(--c-paper-mute) 38%, var(--c-sun) 50%, var(--c-paper-mute) 62%, var(--c-paper-mute) 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: label-shine 2.2s linear infinite;
+}
+@keyframes label-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+.run-error {
+  margin: 0;
+  color: var(--c-paper-mute);
+  animation: fade-in var(--t-slow) var(--ease);
+}
+.run-error button {
+  margin-left: 10px;
+  color: var(--c-amber);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  font-size: inherit;
+}
+
+/* altura acompanha o conteúdo, sem saltos */
+.smooth {
+  overflow: hidden;
+  /* folga para o brilho das estrelas e as letras de baixo, sem mudar o espaço que ocupa */
+  margin: -6px -6px;
+  transition: height 520ms var(--ease);
+}
+.smooth > div {
+  /* sem isso, a margem do primeiro e do último filho escapa da medida e a última linha é cortada */
+  display: flow-root;
+  padding: 6px;
+}
+
+/* ── chave da API, pedida no lugar ── */
+
+.key-field {
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--c-line-strong);
+  color: var(--c-paper-dim);
+  font-size: 13px;
+  animation: rise var(--t-base) var(--ease);
+}
+.key-field p {
+  margin: 0 0 10px;
+}
+.key-row {
+  display: flex;
+  gap: 8px;
+}
+.key-row .btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.key-link {
+  margin-top: 10px;
+  color: var(--c-paper-mute);
+  transition: color var(--t-fast);
+}
+.key-link:hover {
+  color: var(--c-amber);
+}
+
+/* ── etiquetas: as que a IA põe nascem com brilho; "sugerir" é discreto ── */
+
+.tag[data-glow] {
+  position: relative;
+  border-color: rgba(255, 180, 61, 0.7);
+  animation: tag-born 900ms var(--spring) both;
+}
+.tag[data-glow]::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(255, 180, 61, 0.6), 0 0 18px rgba(255, 180, 61, 0.45);
+  animation: tag-halo 2.4s var(--ease) forwards;
+  pointer-events: none;
+}
+@keyframes tag-born {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+    filter: blur(4px);
+  }
+}
+@keyframes tag-halo {
+  to {
+    box-shadow: 0 0 0 6px rgba(255, 180, 61, 0), 0 0 0 rgba(255, 180, 61, 0);
+  }
+}
+.tag {
+  transition: border-color 1.2s var(--ease), color var(--t-fast);
+}
+.tag-suggest {
+  border-style: dashed;
+  color: var(--c-paper-mute);
+  animation: fade-in var(--t-slow) var(--ease);
+  transition: color var(--t-base), border-color var(--t-base), box-shadow var(--t-base);
+}
+.tag-suggest:hover {
+  border-color: rgba(255, 180, 61, 0.6);
+  color: var(--c-amber);
+  box-shadow: 0 0 14px -4px rgba(255, 180, 61, 0.6);
+}
+.tag-working {
+  display: inline-flex;
+  align-items: center;
+  border-style: dashed;
+  border-color: rgba(255, 180, 61, 0.4);
+}
+.tag-working .thinking {
+  gap: 6px;
+  margin: 0;
+}
+.tag-working .thinking-label {
+  font-size: 9.5px;
+}
+
+/* ── card: respira enquanto a IA lê, luz passa quando termina ── */
+
+.card[data-working]::before,
+.card[data-glow]::before {
+  content: "";
+  position: absolute;
+  inset: 8% 6%;
+  z-index: -1;
+  border-radius: 20px;
+  background: var(--g-flare);
+  filter: blur(28px);
+  pointer-events: none;
+}
+.card[data-working],
+.card[data-glow] {
+  isolation: isolate;
+}
+.card[data-working]::before {
+  animation: breathe 2.6s ease-in-out infinite;
+}
+.card[data-glow]::before {
+  animation: glow-out 3.2s var(--ease) forwards;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.08;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.32;
+    transform: scale(1.02);
+  }
+}
+@keyframes glow-out {
+  0% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.card[data-glow]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 6px;
+  background: linear-gradient(110deg, transparent 38%, rgba(255, 241, 184, 0.28) 48%, rgba(255, 180, 61, 0.18) 54%, transparent 64%);
+  background-size: 280% 100%;
+  background-position: 130% 0;
+  mix-blend-mode: screen;
+  animation: sweep 1.6s var(--ease) 0.1s forwards;
+}
+
+/* ── resumo no detalhe ── */
+
+.detail-summary {
+  /* resumos têm 2 a 4 frases: cabem inteiros, sem rolagem interna */
+  overflow: visible;
+}
+.detail-actions .btn:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── pergunta sobre o acervo (pela busca) ── */
+
+.answer-panel {
+  position: relative;
+  max-width: 760px;
+  margin: -14px 0 38px;
+  padding: 22px 26px 24px;
+  border-radius: 22px;
+  border: 1px solid var(--c-line-strong);
+  background:
+    radial-gradient(90% 70% at 0% 0%, rgba(42, 75, 255, 0.12), transparent 60%),
+    rgba(12, 10, 21, 0.75);
+  backdrop-filter: blur(10px);
+  animation: rise var(--t-slow) var(--ease);
+}
+.answer-panel::before {
+  /* fio de labareda no topo, como a pílula da navegação */
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 26px;
+  width: 90px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--g-flare);
+  box-shadow: 0 0 12px 1px rgba(255, 180, 61, 0.6);
+}
+.answer-panel[data-closing] {
+  animation: sink 320ms var(--ease) forwards;
+}
+@keyframes sink {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(-6px) scale(0.985);
+  }
+}
+.answer-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.answer-question {
+  margin: 0 32px 14px 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.answer-panel .prose {
+  font-size: 16.5px;
+}
+
+/* ── resumo no leitor ── */
+
+.reader-tools .icon-btn[aria-pressed="true"] {
+  color: var(--r-accent);
+  background: color-mix(in srgb, var(--r-accent) 14%, transparent);
+}
+.reader-summary {
+  margin: 0 0 2.2em;
+  padding: 18px 22px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--r-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--r-accent) 6%, transparent);
+  animation: rise var(--t-slow) var(--ease);
+}
+.reader-summary .prose {
+  color: inherit;
+  font-size: calc(var(--reader-size, 19px) * 0.9);
+}
+.reader-summary .prose strong {
+  color: inherit;
+}
+.reader-summary .thinking-label {
+  background-image: linear-gradient(90deg, var(--r-dim) 0%, var(--r-dim) 38%, var(--r-accent) 50%, var(--r-dim) 62%, var(--r-dim) 100%);
+}
+
+/* ── leitura do documento: painel lateral ── */
+
+.viewer-actions {
+  display: flex;
+  gap: 8px;
+}
+.viewer-actions .btn[aria-pressed="true"] {
+  border-color: rgba(255, 180, 61, 0.6);
+  color: var(--c-amber);
+}
+.viewer-doc > :not(.viewer-bar):not(.doc-panel) {
+  transition: margin-right var(--t-slow) var(--ease);
+}
+.viewer-doc[data-panel] > :not(.viewer-bar):not(.doc-panel) {
+  margin-right: 400px;
+}
+.doc-panel {
+  position: absolute;
+  z-index: 3;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--c-line);
+  background:
+    radial-gradient(120% 50% at 100% 0%, rgba(42, 75, 255, 0.12), transparent 60%),
+    rgba(12, 10, 21, 0.92);
+  backdrop-filter: blur(14px);
+  animation: panel-in var(--t-slow) var(--ease);
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+.doc-panel[data-closing] {
+  animation: panel-out 360ms var(--ease) forwards;
+}
+@keyframes panel-out {
+  to {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+.doc-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 14px 0 24px;
+}
+.doc-panel-head .kicker {
+  flex: 1;
+  margin: 0;
+}
+.doc-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 24px 32px;
+}
+
+/* ── ajustes ── */
+
+.settings {
+  padding: 34px 36px 36px;
+}
+.settings-title {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+}
+.settings-sub {
+  max-width: 520px;
+  margin: 10px 0 8px;
+  color: var(--c-paper-dim);
+  line-height: 1.55;
+}
+.settings-toggle {
+  display: flex;
+  gap: 12px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--c-line);
+  color: var(--c-paper-mute);
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.settings-toggle strong {
+  display: block;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--c-paper);
+}
+.settings-toggle input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 4px;
+  accent-color: var(--c-amber);
+}
+.modal:has(.settings) {
+  width: min(580px, 100%);
+}

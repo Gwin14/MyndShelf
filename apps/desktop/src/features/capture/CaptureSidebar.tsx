@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Radio, Search, Sparkles, Tag } from "lucide-react";
+import { Plus, Radio, Sparkles, Tag } from "lucide-react";
 import { describeFeedSource, isProbablyUrl, KIND_LABELS } from "@myndshelf/core";
 import type { CaptureKind } from "@myndshelf/types";
 import { SideItem, SideSection } from "../../components/SideSection";
@@ -15,7 +15,7 @@ export function CaptureSidebar() {
   const captures = useLibrary((s) => s.captures);
   const feeds = useLibrary((s) => s.feeds);
   const entries = useLibrary((s) => s.feedEntries);
-  const { captureKind, captureTag, captureQuery, captureFeed, set } = useUi();
+  const { captureKind, captureTag, captureFeed, set } = useUi();
   const [draft, setDraft] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
@@ -61,16 +61,6 @@ export function CaptureSidebar() {
 
   return (
     <>
-      <div className="side-search">
-        <Search size={14} />
-        <input
-          className="field"
-          placeholder="Buscar no céu…"
-          value={captureQuery}
-          onChange={(e) => set({ captureQuery: e.target.value })}
-        />
-      </div>
-
       <SideSection title="Constelações">
         <SideItem
           icon={<Sparkles size={15} />}
@@ -173,8 +163,8 @@ export function CaptureSidebar() {
 
       <div className="side-hint">
         <strong>Capture sem pensar.</strong>
-        Cole um link com ⌘V em qualquer lugar ou arraste imagens para a tela. A capa se ajusta ao que for: disco,
-        livro, filme…
+        No campo grande: digite para buscar, ⇥ para perguntar ao acervo, ⇧↵ para guardar. ⌘V em qualquer lugar guarda
+        o que estiver copiado.
       </div>
     </>
   );

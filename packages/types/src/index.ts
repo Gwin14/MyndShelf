@@ -129,6 +129,8 @@ export interface Creation {
   size?: number;
   year?: number;
   notes?: string;
+  /** Leitura do documento, guardada depois de gerada. */
+  analysis?: string;
   shelfId: string | null;
   featured: boolean;
   hue: number;
