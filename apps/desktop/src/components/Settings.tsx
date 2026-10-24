@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAi } from "../lib/ai";
+import { exportLibrary, importLibrary } from "../lib/backup";
 import { openExternal } from "../lib/platform";
 import { Modal } from "./Modal";
 
@@ -44,6 +45,27 @@ export function Settings({ onClose }: { onClose: () => void }) {
             certa.
           </span>
         </label>
+
+        <h2 className="settings-title settings-section">Acervo</h2>
+        <p className="settings-sub">Exporte tudo em JSON para levar ao celular ou guardar uma cópia. Os arquivos originais da Estante ficam neste computador; vão só as prévias.</p>
+        <div className="key-row">
+          <button className="btn" onClick={exportLibrary}>
+            Exportar
+          </button>
+          <label className="btn">
+            Importar
+            <input
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void importLibrary(file);
+              }}
+            />
+          </label>
+        </div>
       </div>
     </Modal>
   );

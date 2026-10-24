@@ -14,9 +14,10 @@ import {
 import { fetchHtml, resolveUrl } from "./platform";
 import { library } from "./store";
 import { downscaleToDataUrl } from "./images";
-import { subscribe } from "./feeds";
+import { entryAsItem, subscribe } from "./feeds";
 import { useUi } from "./ui";
 import { toast } from "./toast";
+import type { FeedEntry } from "@myndshelf/types";
 
 /** Links de mapa viram lugares; o resto passa pelo OpenGraph. */
 function enrich(url: string) {
@@ -111,4 +112,18 @@ export async function refreshCapture(id: string) {
   } catch {
     library.getState().updateCapture(id, { status: "error" });
   }
+}
+
+/** Guarda a entrada como captura (uma vez só), relendo a página para ganhar a capa certa. */
+export async function saveEntry(entry: FeedEntry): Promise<string | undefined> {
+  const s = library.getState();
+  if (entry.savedAs && s.captures.some((c) => c.id === entry.savedAs)) return entry.savedAs;
+  let id: string | undefined;
+  if (entry.url) id = await captureText(entry.url);
+  else {
+    const { id: _id, ...item } = entryAsItem(entry, s.feeds.find((f) => f.id === entry.feedId));
+    id = s.addCapture({ ...item, createdAt: Date.now() });
+  }
+  if (id) library.getState().updateEntry(entry.id, { savedAs: id, read: true });
+  return id;
 }

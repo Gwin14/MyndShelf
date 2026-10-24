@@ -23,7 +23,7 @@ apps/
     src/            interface (features/capture, shelf, projects)
     src-tauri/      Rust: comando fetch_html (OpenGraph sem CORS), janela, opener
   web/              Next.js (futuro)
-  mobile/           Expo / React Native (futuro)
+  mobile/           Expo 58 + expo-router (React Native)  ← em desenvolvimento
 packages/
   types/            modelos de dados compartilhados
   core/             regras de negócio: parser OpenGraph, detecção de tipo, store (zustand) com storage injetável
@@ -43,7 +43,10 @@ corepack pnpm install
 corepack pnpm desktop        # app Tauri com hot reload
 corepack pnpm desktop:web    # só a interface no navegador (http://localhost:1420)
 corepack pnpm desktop:build  # gera o .app / .dmg
+corepack pnpm mobile         # app mobile no Expo Go (Node 22.13+)
 ```
+
+Backup: Ajustes → Acervo exporta/importa o acervo em JSON, no desktop e no celular (mesmo formato, `packages/core/src/backup.ts`).
 
 ## Próximos passos sugeridos
 

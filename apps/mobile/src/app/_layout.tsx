@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { Stack } from "expo-router";
+import { DarkTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -21,6 +21,9 @@ import { startAutoTag } from "../lib/ai";
 import { colors } from "../lib/theme";
 
 void SplashScreen.preventAutoHideAsync();
+
+// telas transparentes: o céu em Skia aparece por trás de tudo
+const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: "transparent", card: colors.night, primary: colors.amber, text: colors.paper, border: colors.line } };
 
 // streaming das respostas do Gemini precisa do fetch do Expo (corpo legível aos pedaços)
 configureAi({ fetch: expoFetch as unknown as typeof fetch });
@@ -59,6 +62,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <Cosmos />
+      <ThemeProvider value={theme}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" }, animation: "fade_from_bottom" }}>
         <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
         <Stack.Screen name="capture/[id]" options={{ presentation: "modal", contentStyle: styles.modal }} />
@@ -73,6 +77,7 @@ export default function RootLayout() {
         <Stack.Screen name="save" options={{ animation: "none" }} />
         <Stack.Screen name="settings" options={{ presentation: "modal", contentStyle: styles.modal }} />
       </Stack>
+      </ThemeProvider>
       <ActionSheetHost />
       <PromptHost />
       <ToastHost />

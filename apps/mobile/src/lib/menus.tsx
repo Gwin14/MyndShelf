@@ -28,8 +28,8 @@ import {
 import { describeFeedSource, KIND_LABELS, MEDIUM_LABELS, VIEW_LABELS, viewModeOf, type ViewMode } from "@myndshelf/core";
 import type { CaptureItem, CaptureKind, Creation, CreationMedium, Feed, FeedEntry, Shelf } from "@myndshelf/types";
 import { placeNode } from "./board";
-import { refreshCapture } from "./capture";
-import { refreshFeed, saveEntry, subscribe } from "./feeds";
+import { refreshCapture, saveEntry } from "./capture";
+import { refreshFeed, subscribe } from "./feeds";
 import { docKindOf, removeCreationFiles, shareCreation } from "./files";
 import { openExternal, openInApp } from "./platform";
 import type { MaybeEntry, SheetEntry } from "./sheet";
