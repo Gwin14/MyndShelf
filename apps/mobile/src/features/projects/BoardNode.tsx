@@ -1,7 +1,8 @@
 import { memo, useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { GestureDetector, usePanGesture, useTapGesture, useLongPressGesture, useExclusiveGestures, type PanGesture } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, } from "react-native-reanimated";
+import { FAST, smooth } from "../../lib/motion";
 import { scheduleOnRN } from "react-native-worklets";
 import type { BoardNode } from "@myndshelf/types";
 import { useLibrary } from "../../lib/store";
@@ -42,7 +43,7 @@ export const BoardNodeView = memo(function BoardNodeView({ node, zoom, selected,
     minDistance: 6,
     block: canvas,
     onActivate: () => {
-      lift.value = withSpring(1);
+      lift.value = smooth(1, FAST);
     },
     onUpdate: (e) => {
       dx.value = e.translationX / zoom.value;
@@ -50,7 +51,7 @@ export const BoardNodeView = memo(function BoardNodeView({ node, zoom, selected,
       scheduleOnRN(onDrag, node.id, dx.value, dy.value);
     },
     onDeactivate: () => {
-      lift.value = withSpring(0);
+      lift.value = smooth(0, FAST);
       scheduleOnRN(onDrop, node.id, dx.value, dy.value);
     },
   });

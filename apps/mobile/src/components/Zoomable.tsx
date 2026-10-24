@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { StyleSheet } from "react-native";
 import { GestureDetector, usePanGesture, usePinchGesture, useSimultaneousGestures, useTapGesture, useExclusiveGestures } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { smooth } from "../lib/motion";
 
 /** Pinça para aproximar, arrastar para passear, toque duplo para alternar 1× ↔ 2,5×. */
 export function Zoomable({ children, width, height }: { children: ReactNode; width: number; height: number }) {
@@ -27,9 +28,9 @@ export function Zoomable({ children, width, height }: { children: ReactNode; wid
     },
     onDeactivate: () => {
       if (scale.value < 1) {
-        scale.value = withSpring(1);
-        x.value = withSpring(0);
-        y.value = withSpring(0);
+        scale.value = smooth(1);
+        x.value = smooth(0);
+        y.value = smooth(0);
       }
     },
   });
@@ -51,10 +52,10 @@ export function Zoomable({ children, width, height }: { children: ReactNode; wid
     onDeactivate: (e) => {
       if (e.canceled) return;
       const next = scale.value > 1.2 ? 1 : 2.5;
-      scale.value = withSpring(next, { damping: 18 });
+      scale.value = smooth(next);
       if (next === 1) {
-        x.value = withSpring(0);
-        y.value = withSpring(0);
+        x.value = smooth(0);
+        y.value = smooth(0);
       }
     },
   });

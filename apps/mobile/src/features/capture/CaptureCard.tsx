@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withTiming, cancelAnimation } from "react-native-reanimated";
+import { EASE, SLOW } from "../../lib/motion";
 import { BookOpen, Expand, MapPin, Play } from "lucide-react-native";
 import { VIEW_LABELS, viewModeOf, type ViewMode } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
@@ -38,7 +39,7 @@ export const CaptureCard = memo(function CaptureCard({ item, index, width }: { i
   const breathe = useAnimatedStyle(() => ({ opacity: breath.value }));
 
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, 12) * 40).springify().damping(18)}>
+    <Animated.View entering={FadeInDown.delay(Math.min(index, 12) * 40).duration(SLOW).easing(EASE)}>
       <Touch
         onPress={() => router.push(`/capture/${item.id}`)}
         onLongPress={() => openSheet(captureMenu(item), item.title)}

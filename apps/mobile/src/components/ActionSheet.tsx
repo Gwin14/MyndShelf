@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated";
+import { BASE, EASE } from "../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useSheet, type SheetEntry } from "../lib/sheet";
@@ -23,7 +24,7 @@ export function ActionSheetHost() {
         <Pressable style={styles.backdrop} onPress={close} />
       </Animated.View>
       <View style={styles.dock} pointerEvents="box-none">
-        <Animated.View entering={SlideInDown.springify().damping(20).stiffness(220)} exiting={SlideOutDown.duration(180)} style={[styles.panel, { paddingBottom: insets.bottom + 12 }]}>
+        <Animated.View entering={SlideInDown.duration(BASE).easing(EASE)} exiting={SlideOutDown.duration(180)} style={[styles.panel, { paddingBottom: insets.bottom + 12 }]}>
           <View style={styles.grip} />
           {level ? (
             <Pressable style={styles.back} onPress={() => setStack((s) => s.slice(0, -1))} hitSlop={8}>

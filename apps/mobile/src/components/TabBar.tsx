@@ -2,7 +2,8 @@ import { useEffect, useState, type ComponentProps } from "react";
 import type { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { SLOW, smooth } from "../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCosmos } from "../lib/cosmos";
 import { tap } from "../lib/haptics";
@@ -28,7 +29,7 @@ export function TabBar({ state, emitter, navigateToTab }: Props) {
   const setShift = useCosmos((s) => s.setShift);
 
   useEffect(() => {
-    x.value = withSpring(state.index * slot, { damping: 16, stiffness: 180, mass: 0.9 });
+    x.value = smooth(state.index * slot, SLOW);
     setShift(state.index - 1);
   }, [state.index, slot, x, setShift]);
 

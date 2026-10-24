@@ -10,6 +10,7 @@ import type { Project } from "@myndshelf/types";
 import { Touch } from "../../components/Touch";
 import { press, success, tap } from "../../lib/haptics";
 import { WORLD } from "../../lib/board";
+import { BASE, EASE } from "../../lib/motion";
 import { askText } from "../../lib/prompt";
 import { openSheet, type MaybeEntry } from "../../lib/sheet";
 import { library } from "../../lib/store";
@@ -262,7 +263,7 @@ export function Board({ project, onReady }: { project: Project; onReady?: (h: Bo
       </GestureDetector>
 
       {sel && (
-        <Animated.View entering={FadeInDown.springify().damping(18)} exiting={FadeOutDown.duration(150)} style={styles.toolbar}>
+        <Animated.View entering={FadeInDown.duration(BASE).easing(EASE)} exiting={FadeOutDown.duration(150)} style={styles.toolbar}>
           {linkFrom ? (
             <>
               <Text style={styles.toolHint}>Toque em outro objeto para ligar</Text>

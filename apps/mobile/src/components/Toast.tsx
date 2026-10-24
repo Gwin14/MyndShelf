@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
+import { BASE, EASE } from "../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useToast } from "../lib/toast";
 import { colors, fonts } from "../lib/theme";
@@ -12,7 +13,7 @@ export function ToastHost() {
   if (!toast) return null;
   return (
     <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.host, { paddingBottom: insets.bottom + 92 }]}>
-      <Animated.View key={toast.id} entering={FadeInDown.springify().damping(16)} exiting={FadeOutDown.duration(180)} style={styles.toast}>
+      <Animated.View key={toast.id} entering={FadeInDown.duration(BASE).easing(EASE)} exiting={FadeOutDown.duration(180)} style={styles.toast}>
         <Text style={styles.star}>✦</Text>
         <Text style={styles.msg} numberOfLines={3}>
           {toast.message}

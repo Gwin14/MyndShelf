@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming } from "react-native-reanimated";
+import { BASE, EASE } from "../lib/motion";
 import { useAi, type RunState } from "../lib/ai";
 import { openInApp } from "../lib/platform";
 import { colors, fonts } from "../lib/theme";
@@ -11,7 +12,7 @@ import { Touch } from "./Touch";
 /** Estado de uma resposta: esperando, escrevendo, pedindo a chave ou com erro. */
 export function RunOutput({ state, label, onRetry, resolve }: { state: RunState; label: string; onRetry(): void; resolve?: (key: string) => ProseRef | undefined }) {
   return (
-    <Animated.View layout={LinearTransition.springify().damping(20)}>
+    <Animated.View layout={LinearTransition.duration(BASE).easing(EASE)}>
       <Body state={state} label={label} onRetry={onRetry} resolve={resolve} />
     </Animated.View>
   );

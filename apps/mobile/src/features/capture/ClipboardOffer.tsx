@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppState, StyleSheet, Text, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
+import { BASE, EASE } from "../../lib/motion";
 import { ClipboardPaste, X } from "lucide-react-native";
 import { Button } from "../../components/Button";
 import { Touch } from "../../components/Touch";
@@ -32,7 +33,7 @@ export function ClipboardOffer() {
 
   if (!show) return null;
   return (
-    <Animated.View entering={FadeInUp.springify().damping(18)} exiting={FadeOutUp} style={styles.wrap}>
+    <Animated.View entering={FadeInUp.duration(BASE).easing(EASE)} exiting={FadeOutUp} style={styles.wrap}>
       <ClipboardPaste size={18} color={colors.amber} />
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>Link copiado</Text>

@@ -2,7 +2,8 @@ import { memo, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { SLOW, smooth } from "../../lib/motion";
 import Svg, { Polygon } from "react-native-svg";
 import type { Creation } from "@myndshelf/types";
 import { codeLanguageOf } from "@myndshelf/core";
@@ -132,7 +133,7 @@ function Manuscript({ item }: P) {
 
 function Floppy({ item, active }: P) {
   const lang = codeLanguageOf(item.fileName);
-  const shutter = useAnimatedStyle(() => ({ transform: [{ translateX: withSpring(active ? 30 : 0, { damping: 14 }) }] }));
+  const shutter = useAnimatedStyle(() => ({ transform: [{ translateX: smooth(active ? 30 : 0, SLOW) }] }));
   return (
     <View style={[{ width: 126, height: 130 }, shadow]}>
       {/* canto chanfrado, como nos disquetes de verdade */}

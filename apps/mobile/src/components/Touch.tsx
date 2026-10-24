@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { BASE, FAST, smooth } from "../lib/motion";
 
 const APressable = Animated.createAnimatedComponent(Pressable);
 
@@ -17,11 +18,11 @@ export function Touch({
     <APressable
       {...props}
       onPressIn={(e) => {
-        s.value = withSpring(scale, { damping: 18, stiffness: 400 });
+        s.value = smooth(scale, FAST);
         props.onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        s.value = withSpring(1, { damping: 12, stiffness: 300 });
+        s.value = smooth(1, BASE);
         props.onPressOut?.(e);
       }}
       style={[style, anim]}

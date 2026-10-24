@@ -1,8 +1,9 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { SLOW, smooth } from "../../../lib/motion";
 import Svg, { Circle, Defs, Pattern, Polygon, RadialGradient, Rect, Stop } from "react-native-svg";
 import { Play } from "lucide-react-native";
 import type { CaptureItem } from "@myndshelf/types";
@@ -35,6 +36,15 @@ export const Cover = memo(function Cover(props: Props) {
   return <C {...props} k={k} fs={fs} />;
 });
 
+/** 0 → 1 quando a capa fica ativa (aberta no detalhe), sempre com a curva suave. */
+function useActive(active?: boolean) {
+  const t = useSharedValue(active ? 1 : 0);
+  useEffect(() => {
+    t.value = smooth(active ? 1 : 0, SLOW);
+  }, [active, t]);
+  return t;
+}
+
 const mono = (size: number, color: string) => ({ fontFamily: fonts.mono, fontSize: size, letterSpacing: size * 0.08, textTransform: "uppercase" as const, color });
 
 function LoadingCover({ width, fs }: CoverProps) {
@@ -54,7 +64,7 @@ function MusicCover({ item, width, active }: CoverProps) {
   const H = width / 1.16;
   const disc = width * 0.8;
   const spin = useSpin(3200, !!active);
-  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: withSpring(active ? 0 : -disc * 0.16, { damping: 14, stiffness: 120 }) }] }));
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: smooth(active ? 0 : -disc * 0.16, SLOW) }] }));
   const grooves = Array.from({ length: 22 }, (_, i) => 49 - i * 0.8);
   return (
     <View style={{ width, height: H }}>
@@ -115,8 +125,9 @@ function PodcastCover({ item, width, fs }: CoverProps) {
 function BookCover({ item, width, active, fs }: CoverProps) {
   const w = width * 0.76;
   const h = w * 1.5;
+  const t = useActive(active);
   const tilt = useAnimatedStyle(() => ({
-    transform: [{ perspective: 900 }, { rotateY: withSpring(active ? "-4deg" : "-16deg", { damping: 16 }) }],
+    transform: [{ perspective: 900 }, { rotateY: `${-16 + 12 * t.value}deg` }],
   }));
   return (
     <View style={{ width, alignItems: "center", paddingTop: width * 0.04, paddingBottom: width * 0.03 }}>
@@ -216,8 +227,9 @@ function FilmCover({ item, width, fs }: CoverProps) {
 function GameCover({ item, width, fs, active }: CoverProps) {
   const w = width * 0.8;
   const h = w / 0.84;
+  const t = useActive(active);
   const lift = useAnimatedStyle(() => ({
-    transform: [{ translateY: withSpring(active ? -6 : 0) }, { rotate: withSpring(active ? "-1.5deg" : "0deg") }],
+    transform: [{ translateY: -6 * t.value }, { rotate: `${-1.5 * t.value}deg` }],
   }));
   return (
     <View style={{ width, alignItems: "center", paddingVertical: width * 0.03 }}>
