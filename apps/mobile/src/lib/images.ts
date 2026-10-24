@@ -2,6 +2,12 @@ import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 
 /** Reduz uma imagem local para uma prévia leve em data URL (como `downscaleImage` no desktop). */
 export async function downscaleToDataUrl(uri: string, width: number, height: number, max = 1400, compress = 0.86) {
+  if (!width || !height) {
+    // tamanho desconhecido (ex.: imagem vinda da extensão de compartilhar): mede antes
+    const probe = await ImageManipulator.manipulate(uri).renderAsync();
+    width = probe.width;
+    height = probe.height;
+  }
   const scale = Math.min(1, max / Math.max(width || max, height || max));
   const ctx = ImageManipulator.manipulate(uri);
   if (scale < 1) ctx.resize({ width: Math.round(width * scale) });

@@ -18,6 +18,7 @@ import { PromptHost } from "../components/PromptHost";
 import { startFeedSync } from "../lib/feeds";
 import { seedOnce } from "../lib/seed";
 import { startAutoTag } from "../lib/ai";
+import { startInbox } from "../lib/inbox";
 import { colors } from "../lib/theme";
 
 void SplashScreen.preventAutoHideAsync();
@@ -47,9 +48,11 @@ export default function RootLayout() {
     void seedOnce();
     const stopFeeds = startFeedSync();
     const stopTags = startAutoTag();
+    const stopInbox = startInbox();
     return () => {
       stopFeeds();
       stopTags();
+      stopInbox();
     };
   }, []);
 

@@ -10,7 +10,12 @@
     "backgroundColor": "#06050b",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.myndshelf.app"
+      "bundleIdentifier": "com.myndshelf.app",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.myndshelf.app"
+        ]
+      }
     },
     "android": {
       "package": "com.myndshelf.app",
@@ -21,6 +26,7 @@
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
+      "@bacons/apple-targets",
       "expo-router",
       [
         "expo-splash-screen",

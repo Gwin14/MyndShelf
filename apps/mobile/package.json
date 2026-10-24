@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "expo start",
     "start": "expo start",
-    "ios": "expo start --ios",
-    "android": "expo start --android",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
@@ -58,6 +58,7 @@
     "zustand": "^5.0.16"
   },
   "devDependencies": {
+    "@bacons/apple-targets": "^5.0.0",
     "@myndshelf/config": "workspace:*",
     "@types/react": "~19.3.0",
     "typescript": "~6.0.3"
