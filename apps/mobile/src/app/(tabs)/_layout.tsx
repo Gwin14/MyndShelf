@@ -4,7 +4,7 @@ import { TabBar } from "../../components/TabBar";
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <TabBar {...(props as unknown as Parameters<typeof TabBar>[0])} />}
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: "transparent" }, animation: "fade" }}
     >
       <Tabs.Screen name="index" />

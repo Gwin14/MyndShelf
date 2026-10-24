@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
+import type { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
@@ -15,13 +16,11 @@ const NAV: Record<string, { numeral: string; label: string }> = {
   projects: { numeral: "III", label: "Projetos" },
 };
 
-type Props = {
-  state: { index: number; routes: { key: string; name: string }[] };
-  navigation: { emit(e: { type: "tabPress"; target: string; canPreventDefault: true }): { defaultPrevented: boolean }; navigate(name: string): void };
-};
+// as props que o Tabs do expo-router entrega à barra (state, emitter, navigateToTab…)
+type Props = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
 
 /** A navegação do desktop virou uma pílula flutuante no polegar: numerais romanos e a labareda que desliza. */
-export function TabBar({ state, navigation }: Props) {
+export function TabBar({ state, emitter, navigateToTab }: Props) {
   const insets = useSafeAreaInsets();
   const [width, setWidth] = useState(0);
   const slot = width / state.routes.length;
@@ -58,10 +57,10 @@ export function TabBar({ state, navigation }: Props) {
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={nav.label}
                 onPress={() => {
-                  const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+                  const e = emitter.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
                   if (!active && !e.defaultPrevented) {
                     tap();
-                    navigation.navigate(route.name);
+                    navigateToTab(route.key);
                   }
                 }}
               >
