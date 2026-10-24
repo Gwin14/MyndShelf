@@ -51,6 +51,7 @@ export default function ProjectsScreen() {
                   )
                 }
               >
+                <Glow hue={p.hue} id={p.id} />
                 <ConstellationMap project={p} />
                 <View style={styles.info}>
                   <Text style={styles.name} numberOfLines={1}>
@@ -74,6 +75,22 @@ export default function ProjectsScreen() {
   );
 }
 
+/** Brilho da cor do projeto vindo de cima, esticado no card inteiro (o radial-gradient do desktop). */
+function Glow({ hue, id }: { hue: number; id: string }) {
+  const gid = `glow-${id}`;
+  return (
+    <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none" pointerEvents="none">
+      <Defs>
+        <RadialGradient id={gid} cx="50" cy="0" rx="80" ry="90" fx="50" fy="0" gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor={hsl(hue, 70, 50)} stopOpacity="0.14" />
+          <Stop offset="0.7" stopColor={hsl(hue, 70, 50)} stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Rect width="100" height="100" fill={`url(#${gid})`} />
+    </Svg>
+  );
+}
+
 /** O quadro reduzido a um mapa estelar: nós viram estrelas, ligações viram traços. */
 function ConstellationMap({ project }: { project: Project }) {
   const W = 300;
@@ -87,13 +104,6 @@ function ConstellationMap({ project }: { project: Project }) {
   const map = new Map(pts.map((p) => [p.id, { x: W / 2 + (p.x - (minX + maxX) / 2) * k, y: H / 2 + (p.y - (minY + maxY) / 2) * k }]));
   return (
     <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
-      <Defs>
-        <RadialGradient id="glow" cx="50%" cy="0%" rx="80%" ry="90%">
-          <Stop offset="0" stopColor={hsl(project.hue, 70, 50)} stopOpacity="0.16" />
-          <Stop offset="0.7" stopColor={hsl(project.hue, 70, 50)} stopOpacity="0" />
-        </RadialGradient>
-      </Defs>
-      <Rect width={W} height={H} fill="url(#glow)" />
       {project.edges.map((e) => {
         const a = map.get(e.from);
         const b = map.get(e.to);

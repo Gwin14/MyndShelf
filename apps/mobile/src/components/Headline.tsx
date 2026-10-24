@@ -5,13 +5,26 @@ import { GradientText } from "./Flare";
 /** Título editorial: serif grande com uma palavra em itálico tingida de sol. */
 export function Headline({ kicker, before, em, after, size = 44 }: { kicker: string; before?: string; em: string; after?: string; size?: number }) {
   const title = [styles.title, { fontSize: size, lineHeight: size * 1.02 }];
+  const space = { marginRight: size * 0.24 };
+  // uma palavra por peça: ao quebrar a linha, nenhuma começa com espaço sobrando
+  const words = (t?: string) => (t ? t.split(/\s+/).filter(Boolean) : []);
   return (
     <View style={styles.wrap}>
       <Text style={styles.kicker}>{kicker}</Text>
       <View style={styles.line}>
-        {before ? <Text style={title}>{before} </Text> : null}
-        <GradientText style={[title, styles.em]}>{em}</GradientText>
-        {after ? <Text style={title}> {after}</Text> : null}
+        {words(before).map((w, i) => (
+          <Text key={`b${i}`} style={[title, space]}>
+            {w}
+          </Text>
+        ))}
+        <View style={space}>
+          <GradientText style={[title, styles.em]}>{em}</GradientText>
+        </View>
+        {words(after).map((w, i) => (
+          <Text key={`a${i}`} style={[title, space]}>
+            {w}
+          </Text>
+        ))}
       </View>
     </View>
   );
