@@ -14,17 +14,39 @@ struct ShareSheet: View {
   private let wait = 2.8
 
   var body: some View {
-    ZStack(alignment: .bottom) {
-      Color.black.opacity(shown ? 0.38 : 0)
-        .ignoresSafeArea()
-        .onTapGesture { dismiss() }
-
-      card
-        .offset(y: shown ? 0 : 520)
-        .opacity(shown ? 1 : 0)
+    // o iOS apresenta a extensão num sheet próprio, de altura fixa: o conteúdo ocupa ele todo
+    VStack(alignment: .leading, spacing: 20) {
+      header
+      preview
+      noteField
+      Spacer(minLength: 0)
+      done
+    }
+    .padding(.horizontal, 24)
+    .padding(.top, 34)
+    .padding(.bottom, 16)
+    .frame(maxWidth: 560, maxHeight: .infinity, alignment: .top)
+    .frame(maxWidth: .infinity)
+    .opacity(shown ? 1 : 0)
+    .offset(y: shown ? 0 : 28)
+    .background(sky.ignoresSafeArea())
+    .overlay(alignment: .top) {
+      // a labareda se esvazia enquanto o sheet espera para se recolher
+      Capsule()
+        .fill(Theme.flare)
+        .frame(height: 2)
+        .scaleEffect(x: model.state == .saved && autoClose ? countdown : (model.state == .saved ? 1 : 0), anchor: .leading)
+        .padding(.horizontal, 40)
+        .shadow(color: Theme.amber.opacity(0.8), radius: 6)
+        .padding(.top, 16)
+    }
+    .contentShape(Rectangle())
+    .onTapGesture {
+      stopAutoClose()
+      noteFocused = false
     }
     .onAppear {
-      withAnimation(Theme.ease(0.55)) { shown = true }
+      withAnimation(Theme.ease(0.6)) { shown = true }
       withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) { spin = true }
     }
     .onChange(of: model.state) { _, state in
@@ -39,42 +61,26 @@ struct ShareSheet: View {
     }
   }
 
-  private var card: some View {
-    VStack(alignment: .leading, spacing: 18) {
-      header
-      preview
-      noteField
-      done
+  /// Céu do app: noite, nebulosa fria no alto, brasa no pé e algumas faíscas.
+  private var sky: some View {
+    ZStack {
+      Theme.night
+      RadialGradient(colors: [Theme.cobalt.opacity(0.26), .clear], center: .topLeading, startRadius: 0, endRadius: 460)
+      RadialGradient(colors: [Theme.ember.opacity(0.12), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 420)
+      GeometryReader { geo in
+        ForEach(Array(Self.sparkles.enumerated()), id: \.offset) { _, s in
+          Text("✦")
+            .font(.system(size: s.size))
+            .foregroundStyle(Theme.paper.opacity(s.alpha))
+            .position(x: geo.size.width * s.x, y: geo.size.height * s.y)
+        }
+      }
     }
-    .padding(.horizontal, 22)
-    .padding(.top, 22)
-    .padding(.bottom, 26)
-    .frame(maxWidth: 560)
-    .background(
-      RoundedRectangle(cornerRadius: 30, style: .continuous)
-        .fill(Theme.night)
-        .overlay(
-          // brilho de nebulosa no alto do card
-          RadialGradient(colors: [Theme.cobalt.opacity(0.22), .clear], center: .topLeading, startRadius: 0, endRadius: 320)
-            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        )
-        .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).stroke(Theme.lineStrong, lineWidth: 1))
-    )
-    .overlay(alignment: .top) {
-      // a labareda se esvazia enquanto o sheet espera para se recolher
-      Capsule()
-        .fill(Theme.flare)
-        .frame(height: 2)
-        .scaleEffect(x: model.state == .saved && autoClose ? countdown : (model.state == .saved ? 1 : 0), anchor: .leading)
-        .padding(.horizontal, 40)
-        .shadow(color: Theme.amber.opacity(0.8), radius: 6)
-        .offset(y: -1)
-    }
-    .shadow(color: .black.opacity(0.6), radius: 30, y: 10)
-    .padding(.horizontal, 10)
-    .padding(.bottom, 6)
-    .onTapGesture { stopAutoClose() }
   }
+
+  private static let sparkles: [(x: CGFloat, y: CGFloat, size: CGFloat, alpha: Double)] = [
+    (0.86, 0.07, 11, 0.5), (0.12, 0.42, 7, 0.35), (0.78, 0.55, 8, 0.3), (0.32, 0.78, 6, 0.3), (0.92, 0.86, 9, 0.35),
+  ]
 
   private var header: some View {
     HStack(alignment: .center, spacing: 12) {
@@ -115,35 +121,53 @@ struct ShareSheet: View {
 
   @ViewBuilder private var preview: some View {
     if let p = model.preview {
-      HStack(spacing: 14) {
-        thumb(p)
-        VStack(alignment: .leading, spacing: 5) {
-          if let title = p.title {
-            Text(title)
-              .font(p.isNote ? Theme.display(19, italic: true) : Theme.display(20))
-              .foregroundStyle(Theme.paper)
-              .lineLimit(p.isNote ? 3 : 2)
-              .transition(.opacity.combined(with: .offset(y: 4)))
-          } else {
-            // título ainda chegando
-            RoundedRectangle(cornerRadius: 4).fill(Theme.line).frame(height: 14).frame(maxWidth: 180)
-            RoundedRectangle(cornerRadius: 4).fill(Theme.line).frame(height: 14).frame(maxWidth: 120)
-          }
-          Text(p.host)
-            .font(Theme.mono(9.5))
-            .tracking(1)
-            .textCase(.uppercase)
-            .foregroundStyle(Theme.paperMute)
-            .lineLimit(1)
+      VStack(alignment: .leading, spacing: 0) {
+        if let image = p.image, !p.isNote {
+          Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(height: 190)
+            .frame(maxWidth: .infinity)
+            .clipped()
+            .transition(.opacity)
         }
-        Spacer(minLength: 0)
+        row(p)
       }
-      .padding(12)
+      .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
       .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.paper.opacity(0.04)))
       .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Theme.line, lineWidth: 1))
       .transition(.opacity.combined(with: .offset(y: 10)))
       .animation(Theme.ease(0.5), value: p.title)
+      .animation(Theme.ease(0.5), value: p.image != nil)
     }
+  }
+
+  private func row(_ p: ShareModel.Preview) -> some View {
+    HStack(spacing: 14) {
+      // com imagem grande em cima, a miniatura sobraria
+      if p.image == nil || p.isNote { thumb(p) }
+      VStack(alignment: .leading, spacing: 5) {
+        if let title = p.title {
+          Text(title)
+            .font(p.isNote ? Theme.display(19, italic: true) : Theme.display(20))
+            .foregroundStyle(Theme.paper)
+            .lineLimit(p.isNote ? 3 : 2)
+            .transition(.opacity.combined(with: .offset(y: 4)))
+        } else {
+          // título ainda chegando
+          RoundedRectangle(cornerRadius: 4).fill(Theme.line).frame(height: 14).frame(maxWidth: 180)
+          RoundedRectangle(cornerRadius: 4).fill(Theme.line).frame(height: 14).frame(maxWidth: 120)
+        }
+        Text(p.host)
+          .font(Theme.mono(9.5))
+          .tracking(1)
+          .textCase(.uppercase)
+          .foregroundStyle(Theme.paperMute)
+          .lineLimit(1)
+      }
+      Spacer(minLength: 0)
+    }
+    .padding(12)
   }
 
   @ViewBuilder private func thumb(_ p: ShareModel.Preview) -> some View {
@@ -170,7 +194,7 @@ struct ShareSheet: View {
       .font(Theme.display(18, italic: true))
       .foregroundStyle(Theme.paper)
       .tint(Theme.amber)
-      .lineLimit(1...4)
+      .lineLimit(3...8)
       .focused($noteFocused)
       .padding(.horizontal, 14)
       .padding(.vertical, 12)

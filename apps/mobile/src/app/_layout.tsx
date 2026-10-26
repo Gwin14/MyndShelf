@@ -12,6 +12,7 @@ import { Newsreader_400Regular, Newsreader_400Regular_Italic, Newsreader_600Semi
 import { fetch as expoFetch } from "expo/fetch";
 import { configureAi } from "@myndshelf/core";
 import { Cosmos } from "../components/Cosmos";
+import { Intro } from "../components/Intro";
 import { ActionSheetHost } from "../components/ActionSheet";
 import { ToastHost } from "../components/Toast";
 import { PromptHost } from "../components/PromptHost";
@@ -23,6 +24,8 @@ import { startSync } from "../lib/sync";
 import { colors } from "../lib/theme";
 
 void SplashScreen.preventAutoHideAsync();
+// quem esconde a splash é a <Intro>, que começa idêntica a ela; sem fade nativo para não duplicar
+SplashScreen.setOptions({ fade: false });
 
 // telas transparentes: o céu em Skia aparece por trás de tudo
 const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: "transparent", card: colors.night, primary: colors.amber, text: colors.paper, border: colors.line } };
@@ -59,10 +62,6 @@ export default function RootLayout() {
     };
   }, []);
 
-  useEffect(() => {
-    if (loaded) void SplashScreen.hideAsync();
-  }, [loaded]);
-
   if (!loaded) return <View style={styles.root} />;
 
   return (
@@ -87,6 +86,7 @@ export default function RootLayout() {
       <ActionSheetHost />
       <PromptHost />
       <ToastHost />
+      <Intro />
       <StatusBar style="light" />
     </GestureHandlerRootView>
   );
