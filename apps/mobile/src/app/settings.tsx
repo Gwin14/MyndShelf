@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { StyleSheet, Switch, Text, View } from "react-native";
+import { Image, StyleSheet, Switch, Text, View } from "react-native";
 import Constants from "expo-constants";
+import { type AlternateAppIcons, getAppIconName, setAlternateAppIcon, supportsAlternateIcons } from "expo-alternate-app-icons";
 import { Download, RefreshCw, Upload } from "lucide-react-native";
 import { Button } from "../components/Button";
 import { Field, Label } from "../components/Field";
@@ -59,6 +60,8 @@ export default function Settings() {
         <Switch value={autoTag} onValueChange={setAutoTag} trackColor={{ true: colors.amber, false: colors.dusk }} thumbColor={colors.paper} />
       </View>
 
+      <IconSettings />
+
       <ServerSettings />
 
       <Text style={[styles.section, { marginTop: 34 }]}>Acervo</Text>
@@ -89,6 +92,48 @@ function syncLine(s: ReturnType<typeof sync.status.getState>): string {
   if (s.phase === "error") return s.error ?? "Algo deu errado.";
   const when = s.lastSync ? new Date(s.lastSync).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "ainda não";
   return `Última sincronização: ${when}${queue ? ` · ${queue}` : ""}.`;
+}
+
+/** null = ícone principal; os demais são os nomes registrados no app.json. */
+const ICONS: { name: AlternateAppIcons | null; label: string; preview: number }[] = [
+  { name: null, label: "Mind Shelf", preview: require("../../assets/app-icons/MindShelf-preview.png") },
+  { name: "Cosmos", label: "Cosmos", preview: require("../../assets/app-icons/Cosmos-preview.png") },
+  { name: "Emblema", label: "Emblema", preview: require("../../assets/app-icons/Emblema-preview.png") },
+];
+
+function IconSettings() {
+  const [current, setCurrent] = useState(() => getAppIconName());
+  if (!supportsAlternateIcons) return null;
+
+  const choose = async (name: AlternateAppIcons | null) => {
+    if (name === current) return;
+    try {
+      await setAlternateAppIcon(name);
+      setCurrent(name);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Não deu para trocar o ícone");
+    }
+  };
+
+  return (
+    <>
+      <Text style={[styles.section, { marginTop: 34 }]}>Ícone</Text>
+      <Text style={styles.sub}>Como o MyndShelf aparece na tela de início.</Text>
+      <View style={styles.icons}>
+        {ICONS.map((icon) => {
+          const on = icon.name === current;
+          return (
+            <Touch key={icon.label} onPress={() => void choose(icon.name)} style={styles.iconOption}>
+              <View style={[styles.iconRing, on && { borderColor: colors.amber }]}>
+                <Image source={icon.preview} style={styles.iconImage} />
+              </View>
+              <Text style={[styles.iconLabel, on && { color: colors.paper }]}>{icon.label}</Text>
+            </Touch>
+          );
+        })}
+      </View>
+    </>
+  );
 }
 
 /** Self-hosted: liga o celular ao servidor do homelab. */
@@ -158,6 +203,11 @@ function ServerSettings() {
 }
 
 const styles = StyleSheet.create({
+  icons: { flexDirection: "row", gap: 18, marginTop: 16 },
+  iconOption: { alignItems: "center", gap: 8 },
+  iconRing: { padding: 3, borderRadius: 22, borderWidth: 2, borderColor: "transparent" },
+  iconImage: { width: 68, height: 68 },
+  iconLabel: { fontFamily: fonts.mono, fontSize: 9.5, letterSpacing: 1, textTransform: "uppercase", color: colors.paperMute },
   syncRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 },
   dot: { width: 7, height: 7, borderRadius: 4 },
   section: { fontFamily: fonts.display, fontSize: 26, color: colors.paper, marginTop: 6 },

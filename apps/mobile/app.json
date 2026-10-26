@@ -4,7 +4,7 @@
     "slug": "myndshelf",
     "version": "0.1.0",
     "orientation": "default",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icons/MindShelf.png",
     "scheme": "myndshelf",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#06050b",
@@ -15,13 +15,14 @@
         "com.apple.security.application-groups": [
           "group.com.myndshelf.app"
         ]
-      }
+      },
+      "icon": "./assets/app-icons/MindShelf.icon"
     },
     "android": {
       "package": "com.myndshelf.app",
       "adaptiveIcon": {
-        "backgroundColor": "#06050b",
-        "foregroundImage": "./assets/icon.png"
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/app-icons/MindShelf-android.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -39,7 +40,33 @@
       "expo-secure-store",
       "expo-sharing",
       "expo-video",
-      "expo-audio"
+      "expo-audio",
+      [
+        "./plugins/withAlternateIconFiles",
+        [
+          "./assets/app-icons/Cosmos.icon",
+          "./assets/app-icons/Emblema.icon"
+        ]
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Cosmos",
+            "android": {
+              "foregroundImage": "./assets/app-icons/Cosmos-android.png",
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "name": "Emblema",
+            "android": {
+              "foregroundImage": "./assets/app-icons/Emblema-android.png",
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
