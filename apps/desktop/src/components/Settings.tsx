@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAi } from "../lib/ai";
+import { APP_ICONS, iconUrl, useAppIcon } from "../lib/appIcon";
 import { exportLibrary, importLibrary } from "../lib/backup";
-import { openExternal } from "../lib/platform";
+import { isTauri, openExternal } from "../lib/platform";
 import { suggestedServer, sync, useSync } from "../lib/sync";
 import { Modal } from "./Modal";
 
@@ -48,6 +49,8 @@ export function Settings({ onClose }: { onClose: () => void }) {
           </span>
         </label>
 
+        <IconSettings />
+
         <ServerSettings />
 
         <h2 className="settings-title settings-section">Acervo</h2>
@@ -72,6 +75,26 @@ export function Settings({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </Modal>
+  );
+}
+
+function IconSettings() {
+  const { icon, setIcon } = useAppIcon();
+  return (
+    <>
+      <h2 className="settings-title settings-section">Ícone</h2>
+      <p className="settings-sub">{isTauri ? "Como o MyndShelf aparece no Dock e no Finder." : "Como o MyndShelf aparece na aba e ao salvar o site na tela de início."}</p>
+      <div className="icon-picker">
+        {APP_ICONS.map((i) => (
+          <button key={i.name} className={`icon-option${i.name === icon ? " is-on" : ""}`} onClick={() => void setIcon(i.name)} aria-pressed={i.name === icon}>
+            <span className="icon-ring">
+              <img src={iconUrl(i.name)} alt="" width={78} height={78} />
+            </span>
+            <span className="mono">{i.label}</span>
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 

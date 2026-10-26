@@ -2190,6 +2190,7 @@ dependencies = [
 name = "myndshelf"
 version = "0.1.0"
 dependencies = [
+ "objc2",
  "objc2-app-kit",
  "objc2-foundation",
  "reqwest 0.12.28",

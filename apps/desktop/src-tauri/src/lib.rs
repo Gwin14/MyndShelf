@@ -289,6 +289,54 @@ fn drag_pasteboard_text() -> Option<String> {
     None
 }
 
+/* ───────────── ícone do app (as mesmas artes do celular) ───────────── */
+
+/// PNGs no grid do macOS, gerados a partir dos .icon do mobile; o site usa os mesmos.
+fn icon_png(name: &str) -> Option<&'static [u8]> {
+    match name {
+        "MindShelf" => Some(include_bytes!("../../public/app-icons/MindShelf.png")),
+        "Cosmos" => Some(include_bytes!("../../public/app-icons/Cosmos.png")),
+        "Emblema" => Some(include_bytes!("../../public/app-icons/Emblema.png")),
+        _ => None,
+    }
+}
+
+/// Troca o ícone: janela/barra de tarefas (Windows, Linux) e Dock + Finder (macOS).
+/// O principal ("MindShelf") volta ao ícone do pacote, com o vidro do macOS.
+#[tauri::command]
+fn set_app_icon(app: AppHandle, name: String) -> Result<(), String> {
+    let png = icon_png(&name).ok_or_else(|| format!("ícone desconhecido: {name}"))?;
+    if let Some(window) = app.get_webview_window("main") {
+        window.set_icon(Image::from_bytes(png).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let custom = (name != "MindShelf").then_some(png);
+        app.run_on_main_thread(move || macos_icon(custom)).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn macos_icon(png: Option<&'static [u8]>) {
+    use objc2::{rc::Retained, AllocAnyThread, MainThreadMarker};
+    use objc2_app_kit::{NSApplication, NSImage, NSWorkspace, NSWorkspaceIconCreationOptions};
+    use objc2_foundation::{NSData, NSString};
+
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let image: Option<Retained<NSImage>> = png.and_then(|b| NSImage::initWithData(NSImage::alloc(), &NSData::with_bytes(b)));
+    // Dock, enquanto o app está aberto
+    unsafe { NSApplication::sharedApplication(mtm).setApplicationIconImage(image.as_deref()) };
+    // Finder e Dock com o app fechado: ícone próprio no pacote .app (não existe em `tauri dev`)
+    let bundle = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.ancestors().find(|p| p.extension().is_some_and(|e| e == "app")).map(Path::to_path_buf));
+    if let Some(bundle) = bundle {
+        let path = NSString::from_str(&bundle.to_string_lossy());
+        NSWorkspace::sharedWorkspace().setIcon_forFile_options(image.as_deref(), &path, NSWorkspaceIconCreationOptions::empty());
+    }
+}
+
 fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Abrir MyndShelf", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
@@ -343,7 +391,7 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed])
+        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed, set_app_icon])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o MyndShelf");
 }

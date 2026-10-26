@@ -608,3 +608,42 @@
     opacity: 0.35;
   }
 }
+.icon-picker {
+  display: flex;
+  gap: 18px;
+  margin-top: 14px;
+}
+.icon-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-paper-mute);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.icon-ring {
+  display: inline-flex;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 19px;
+  transition: border-color 0.2s;
+}
+/* o PNG tem a margem do grid do macOS (824 de 1024): a margem negativa faz o anel abraçar a forma */
+.icon-ring img {
+  margin: -7px;
+}
+.icon-option:hover .icon-ring {
+  border-color: var(--c-line-strong);
+}
+.icon-option.is-on {
+  color: var(--c-paper);
+}
+.icon-option.is-on .icon-ring {
+  border-color: var(--c-amber);
+}
