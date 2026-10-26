@@ -10,13 +10,13 @@ import { exclusive } from "./pickers";
 import { toast } from "./toast";
 
 /** Arquivos originais da Estante ficam na pasta do app, um por criação. */
-const root = () => {
+export const root = () => {
   const dir = new Directory(Paths.document, "creations");
   if (!dir.exists) dir.create({ intermediates: true });
   return dir;
 };
 
-const safeName = (name: string) => name.replace(/[^\w.\-() ]+/g, "_").slice(-120) || "arquivo";
+export const safeName = (name: string) => name.replace(/[^\w.\-() ]+/g, "_").slice(-120) || "arquivo";
 
 async function keepFile(id: string, uri: string, name: string): Promise<File> {
   const dir = new Directory(root(), id);

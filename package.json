@@ -10,7 +10,9 @@
     "desktop:build": "corepack pnpm --filter @myndshelf/desktop tauri build",
     "mobile": "corepack pnpm --filter @myndshelf/mobile start",
     "mobile:ios": "corepack pnpm --filter @myndshelf/mobile ios",
-    "mobile:android": "corepack pnpm --filter @myndshelf/mobile android"
+    "mobile:android": "corepack pnpm --filter @myndshelf/mobile android",
+    "server": "corepack pnpm --filter @myndshelf/server dev",
+    "server:test": "corepack pnpm --filter @myndshelf/server test"
   },
   "devDependencies": {
     "turbo": "^2.11.10",

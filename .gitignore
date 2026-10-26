@@ -21,3 +21,7 @@ coverage
 
 # claude (local only)
 .claude/settings.local.json
+
+# servidor self-hosted (dados locais de desenvolvimento)
+apps/server/data
+apps/server/backups

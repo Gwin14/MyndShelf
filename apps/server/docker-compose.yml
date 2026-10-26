@@ -1,0 +1,30 @@
+# MyndShelf self-hosted: servidor + backup contínuo do banco.
+#   cp .env.example .env   (e preencha)
+#   docker compose up -d --build
+services:
+  myndshelf:
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+    image: myndshelf-server
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # só no host; o Tailscale (`tailscale serve`) entrega HTTPS para os aparelhos
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - data:/data
+
+  # Litestream: replica o SQLite a cada segundo (pasta local por padrão; S3/MinIO no litestream.yml)
+  litestream:
+    image: litestream/litestream:0.3.13
+    restart: unless-stopped
+    command: replicate
+    depends_on: [myndshelf]
+    volumes:
+      - data:/data
+      - ./litestream.yml:/etc/litestream.yml:ro
+      - ./backups:/backups
+
+volumes:
+  data:

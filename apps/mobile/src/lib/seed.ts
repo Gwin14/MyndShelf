@@ -10,6 +10,12 @@ const SEED_LINKS = [
   "https://en.wikipedia.org/wiki/Pioneer_plaque",
 ];
 
+const WELCOME = "Bem-vindo à sua órbita";
+
+/** Itens de exemplo intocados: não sobem para o servidor ao ligar este aparelho. */
+export const isSample = (collection: string, rec: Record<string, unknown>) =>
+  collection === "captures" && ((rec.kind === "note" && rec.title === WELCOME) || SEED_LINKS.includes(rec.url as string));
+
 /** Primeira abertura: algumas referências para o céu não começar vazio. */
 export async function seedOnce() {
   await ready();
@@ -17,7 +23,7 @@ export async function seedOnce() {
   await flags.set("seeded");
   library.getState().addCapture({
     kind: "note",
-    title: "Bem-vindo à sua órbita",
+    title: WELCOME,
     note: "Bem-vindo à sua órbita.\n\nCole links, fotografe coisas ou escreva pensamentos — cada coisa vira um objeto com capa própria.",
   });
   for (const url of [...SEED_LINKS].reverse()) void captureText(url);

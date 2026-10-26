@@ -18,6 +18,7 @@
     "@mozilla/readability": "^0.6.0",
     "@myndshelf/core": "workspace:*",
     "@myndshelf/design-tokens": "workspace:*",
+    "@myndshelf/sync": "workspace:*",
     "@myndshelf/types": "workspace:*",
     "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/plugin-opener": "^2.7.2",

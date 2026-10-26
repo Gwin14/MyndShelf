@@ -22,6 +22,15 @@
         "start"
       ],
       "port": 8081
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd apps/server && MYNDSHELF_TOKEN=dev-token-myndshelf-local DATA_DIR=./data PUBLIC_DIR=../desktop/dist PORT=8787 /opt/homebrew/opt/node@26/bin/node dist/main.js"
+      ],
+      "port": 8787
     }
   ]
 }

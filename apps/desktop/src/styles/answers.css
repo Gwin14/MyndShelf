@@ -569,3 +569,42 @@
 .modal:has(.settings) {
   width: min(580px, 100%);
 }
+.settings-note {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.sync-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 0 12px;
+  color: var(--c-paper-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sync-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-cyan);
+  transform: translateY(-1px);
+}
+.sync-syncing .sync-dot {
+  background: var(--c-amber);
+  animation: sync-pulse 1s ease-in-out infinite alternate;
+}
+.sync-offline .sync-dot {
+  background: var(--c-paper-mute);
+}
+.sync-error {
+  color: var(--c-ember);
+}
+.sync-error .sync-dot {
+  background: currentColor;
+}
+@keyframes sync-pulse {
+  to {
+    opacity: 0.35;
+  }
+}

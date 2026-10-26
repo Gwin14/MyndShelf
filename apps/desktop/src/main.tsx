@@ -34,11 +34,12 @@ if (location.hash === "#dropzone") {
     ),
   );
 } else {
-  void Promise.all([import("./App"), import("./lib/feeds"), import("./lib/migrate"), import("./lib/seed")]).then(
-    ([{ App }, { startFeedSync }, { migrate }, { seedOnce }]) => {
+  void Promise.all([import("./App"), import("./lib/feeds"), import("./lib/migrate"), import("./lib/seed"), import("./lib/sync")]).then(
+    ([{ App }, { startFeedSync }, { migrate }, { seedOnce }, { startSync }]) => {
       void seedOnce();
       void migrate();
       startFeedSync();
+      startSync();
       root.render(
         <StrictMode>
           <App />

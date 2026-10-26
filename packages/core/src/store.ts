@@ -129,6 +129,17 @@ export function createLibraryStore(storage: StateStorage, name = "myndshelf-libr
                 const id = `${feedId}:${p.guid}`;
                 const prev = known.get(id);
                 if (!prev) fresh++;
+                // entrada igual mantém o mesmo objeto: a sincronização só envia o que mudou
+                if (
+                  prev &&
+                  prev.title === p.title &&
+                  prev.url === p.url &&
+                  prev.summary === p.summary &&
+                  prev.image === p.image &&
+                  prev.author === p.author &&
+                  prev.publishedAt === p.publishedAt
+                )
+                  return prev;
                 return {
                   id,
                   feedId,

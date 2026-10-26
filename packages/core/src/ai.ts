@@ -15,9 +15,17 @@ const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 /** O fetch padrão do React Native não entrega o corpo aos pedaços: o mobile injeta o `expo/fetch`. */
 let aiFetch: typeof fetch = (...args) => fetch(...args);
 
-export function configureAi(options: { fetch?: typeof fetch }) {
+/** Servidor self-hosted com a chave: o app chama /api/ai/… e a chave nunca sai de lá. */
+type AiProxy = () => { endpoint: string; headers: Record<string, string> } | null;
+let aiProxy: AiProxy = () => null;
+
+export function configureAi(options: { fetch?: typeof fetch; proxy?: AiProxy }) {
   if (options.fetch) aiFetch = options.fetch;
+  if (options.proxy) aiProxy = options.proxy;
 }
+
+/** Há como chamar o Gemini sem chave neste aparelho? */
+export const aiViaServer = () => !!aiProxy();
 
 /** Hermes (React Native) não tem DOMException. */
 function abortError(): Error {
@@ -103,11 +111,14 @@ async function post(req: AiRequest, action: string, extra?: Record<string, unkno
 }
 
 async function postOnce(req: AiRequest, model: string, action: string, extra?: Record<string, unknown>): Promise<Response> {
+  // chave própria vai direto ao Google; sem ela, passa pelo servidor
+  const proxy = req.key ? null : aiProxy();
+  if (!req.key && !proxy) throw new AiError("no-key");
   let res: Response;
   try {
-    res = await aiFetch(`${ENDPOINT}/${model}:${action}`, {
+    res = await aiFetch(`${proxy?.endpoint ?? ENDPOINT}/${model}:${action}`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": req.key },
+      headers: { "content-type": "application/json", ...(proxy ? proxy.headers : { "x-goog-api-key": req.key }) },
       body: body(req, model, extra),
       signal: req.signal,
     });

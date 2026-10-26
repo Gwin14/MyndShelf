@@ -2,10 +2,14 @@ import { invoke } from "@tauri-apps/api/core";
 
 export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
+/** No site servido pelo próprio servidor, o proxy de links pede o token. */
+let serverHeaders: () => Record<string, string> = () => ({});
+export const setServerHeaders = (fn: typeof serverHeaders) => (serverHeaders = fn);
+
 /** Baixa HTML de uma URL — via Rust no desktop, via proxy do Vite no navegador. */
 export async function fetchHtml(url: string): Promise<string> {
   if (isTauri) return invoke<string>("fetch_html", { url });
-  const res = await fetch(`/__og?url=${encodeURIComponent(url)}`);
+  const res = await fetch(`/__og?url=${encodeURIComponent(url)}`, { headers: serverHeaders() });
   if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
   return res.text();
 }
@@ -13,7 +17,7 @@ export async function fetchHtml(url: string): Promise<string> {
 /** Destino final de um link curto (segue redirecionamentos). */
 export async function resolveUrl(url: string): Promise<string> {
   if (isTauri) return invoke<string>("resolve_url", { url });
-  const res = await fetch(`/__resolve?url=${encodeURIComponent(url)}`);
+  const res = await fetch(`/__resolve?url=${encodeURIComponent(url)}`, { headers: serverHeaders() });
   if (!res.ok) throw new Error(`resolve failed: ${res.status}`);
   return res.text();
 }

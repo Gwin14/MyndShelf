@@ -15,7 +15,8 @@ import { Prose } from "../../../components/Prose";
 import { Touch } from "../../../components/Touch";
 import { Zoomable } from "../../../components/Zoomable";
 import { ShelfObject } from "../../../features/shelf/ShelfObject";
-import { creationFile, docKindOf, shareCreation } from "../../../lib/files";
+import { docKindOf, shareCreation } from "../../../lib/files";
+import { useCreationFile } from "../../../lib/sync";
 import { useLibrary } from "../../../lib/store";
 import { colors, fonts } from "../../../lib/theme";
 
@@ -24,10 +25,14 @@ export default function ReadCreation() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = useLibrary((s) => s.creations.find((c) => c.id === id));
   const insets = useSafeAreaInsets();
-  const file = item ? creationFile(item) : undefined;
+  const { file, loading } = useCreationFile(item);
   const kind = item ? docKindOf(item) : undefined;
 
-  let body: React.ReactNode = <Empty title="O arquivo não está neste aparelho." hint="Criações importadas de outro aparelho trazem só a prévia." />;
+  let body: React.ReactNode = loading ? (
+    <Empty title="Baixando do servidor…" hint="Depois disso o arquivo fica guardado neste aparelho." />
+  ) : (
+    <Empty title="O arquivo não está neste aparelho." hint="Criações importadas de outro aparelho trazem só a prévia. Ligue ao servidor para baixar o original." />
+  );
   if (item && file) {
     if (item.medium === "image") body = <ImageFile uri={file.uri} />;
     else if (item.medium === "audio") body = <AudioFile item={item} uri={file.uri} />;

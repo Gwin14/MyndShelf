@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 import Constants from "expo-constants";
-import { Download, Upload } from "lucide-react-native";
+import { Download, RefreshCw, Upload } from "lucide-react-native";
 import { Button } from "../components/Button";
 import { Field, Label } from "../components/Field";
 import { Headline } from "../components/Headline";
@@ -11,6 +11,7 @@ import { useAi } from "../lib/ai";
 import { exportLibrary, importLibrary } from "../lib/backup";
 import { openInApp } from "../lib/platform";
 import { useLibrary } from "../lib/store";
+import { sync, useSync } from "../lib/sync";
 import { colors, fonts } from "../lib/theme";
 import { toast } from "../lib/toast";
 
@@ -18,6 +19,7 @@ export default function Settings() {
   const { key, autoTag, setKey, setAutoTag } = useAi();
   const [draft, setDraft] = useState(key);
   const dirty = draft.trim() !== key;
+  const serverAi = useSync((s) => s.ai);
   const counts = {
     c: useLibrary((s) => s.captures.length),
     e: useLibrary((s) => s.creations.length),
@@ -47,6 +49,7 @@ export default function Settings() {
       <Touch onPress={() => void openInApp("https://aistudio.google.com/apikey")} style={{ marginTop: 10 }}>
         <Text style={styles.link}>criar uma chave no Google AI Studio ↗</Text>
       </Touch>
+      {serverAi && <Text style={[styles.sub, { marginTop: 10 }]}>Sem chave aqui, a IA passa pelo seu servidor, que guarda a dele.</Text>}
 
       <View style={styles.toggle}>
         <View style={{ flex: 1 }}>
@@ -56,9 +59,11 @@ export default function Settings() {
         <Switch value={autoTag} onValueChange={setAutoTag} trackColor={{ true: colors.amber, false: colors.dusk }} thumbColor={colors.paper} />
       </View>
 
+      <ServerSettings />
+
       <Text style={[styles.section, { marginTop: 34 }]}>Acervo</Text>
       <Text style={styles.sub}>
-        {counts.c} capturas · {counts.e} criações · {counts.p} projetos · {counts.f} transmissões. Tudo vive neste aparelho; exporte para levar ao desktop ou guardar uma cópia.
+        {counts.c} capturas · {counts.e} criações · {counts.p} projetos · {counts.f} transmissões. Tudo vive neste aparelho; exporte para guardar uma cópia.
       </Text>
       <View style={[styles.row, { marginTop: 14 }]}>
         <Button label="Exportar" icon={<Upload size={15} color={colors.paper} />} onPress={() => void exportLibrary()} />
@@ -75,7 +80,86 @@ export default function Settings() {
   );
 }
 
+function syncLine(s: ReturnType<typeof sync.status.getState>): string {
+  const queue = [s.pending && `${s.pending} ${s.pending === 1 ? "mudança" : "mudanças"} na fila`, s.pendingFiles && `${s.pendingFiles} ${s.pendingFiles === 1 ? "arquivo" : "arquivos"} para subir`]
+    .filter(Boolean)
+    .join(" · ");
+  if (s.phase === "syncing") return "Sincronizando…";
+  if (s.phase === "offline") return `Sem conexão com o servidor. ${queue || "Nada pendente"}; tudo continua funcionando aqui.`;
+  if (s.phase === "error") return s.error ?? "Algo deu errado.";
+  const when = s.lastSync ? new Date(s.lastSync).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "ainda não";
+  return `Última sincronização: ${when}${queue ? ` · ${queue}` : ""}.`;
+}
+
+/** Self-hosted: liga o celular ao servidor do homelab. */
+function ServerSettings() {
+  const status = useSync((s) => s);
+  const [url, setUrl] = useState(status.url ?? "");
+  const [token, setToken] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const connect = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await sync.connect({ url, token });
+      setToken("");
+      toast("Conectado ao servidor ✦");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const dot = { idle: colors.cyan, syncing: colors.amber, offline: colors.paperMute, error: colors.ember, off: colors.paperMute }[status.phase];
+
+  return (
+    <>
+      <Text style={[styles.section, { marginTop: 34 }]}>Servidor</Text>
+      {status.url ? (
+        <>
+          <Text style={styles.sub}>
+            Sincronizando com <Text style={styles.code}>{status.url.replace(/^https?:\/\//, "")}</Text>. O acervo vive neste aparelho e funciona sem conexão; as
+            mudanças sobem quando o servidor responde.
+          </Text>
+          <View style={styles.syncRow}>
+            <View style={[styles.dot, { backgroundColor: dot }]} />
+            <Text style={[styles.sub, { flex: 1, marginTop: 0 }]}>{syncLine(status)}</Text>
+          </View>
+          <View style={[styles.row, { marginTop: 14 }]}>
+            <Button label="Sincronizar" icon={<RefreshCw size={15} color={colors.paper} />} disabled={status.phase === "syncing"} onPress={() => void sync.now()} />
+            <Button label="Desconectar" variant="ghost" onPress={() => void sync.disconnect()} />
+          </View>
+          <View style={styles.toggle}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toggleTitle}>Manter arquivos offline</Text>
+              <Text style={styles.sub}>Baixa todos os originais da Estante. Desligado, cada arquivo desce quando você abre e fica guardado aqui.</Text>
+            </View>
+            <Switch value={status.keepFiles} onValueChange={sync.setKeepFiles} trackColor={{ true: colors.amber, false: colors.dusk }} thumbColor={colors.paper} />
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={styles.sub}>Ligue ao seu servidor self-hosted (pelo Tailscale) para ter o mesmo acervo aqui, no desktop e no site. Sem servidor, tudo fica só neste aparelho.</Text>
+          <Label>Endereço</Label>
+          <Field value={url} onChangeText={setUrl} placeholder="https://myndshelf.seu-tailnet.ts.net" autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+          <Label>Token</Label>
+          <View style={styles.row}>
+            <Field value={token} onChangeText={setToken} placeholder="MYNDSHELF_TOKEN" secureTextEntry autoCapitalize="none" autoCorrect={false} style={{ flex: 1 }} />
+            <Button small label={busy ? "…" : "Conectar"} disabled={busy || !url.trim() || !token.trim()} onPress={() => void connect()} />
+          </View>
+          {!!error && <Text style={[styles.sub, { color: colors.ember, marginTop: 10 }]}>{error}</Text>}
+        </>
+      )}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
+  syncRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
   section: { fontFamily: fonts.display, fontSize: 26, color: colors.paper, marginTop: 6 },
   sub: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.paperDim, marginTop: 4 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },

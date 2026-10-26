@@ -19,6 +19,7 @@ import { startFeedSync } from "../lib/feeds";
 import { seedOnce } from "../lib/seed";
 import { startAutoTag } from "../lib/ai";
 import { startInbox } from "../lib/inbox";
+import { startSync } from "../lib/sync";
 import { colors } from "../lib/theme";
 
 void SplashScreen.preventAutoHideAsync();
@@ -49,7 +50,9 @@ export default function RootLayout() {
     const stopFeeds = startFeedSync();
     const stopTags = startAutoTag();
     const stopInbox = startInbox();
+    const stopSync = startSync();
     return () => {
+      stopSync();
       stopFeeds();
       stopTags();
       stopInbox();

@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.expo
+apps/mobile/ios
+apps/mobile/android
+apps/desktop/src-tauri/target
+apps/server/data
+.git
+**/.DS_Store
+**/.env
+**/.env.*

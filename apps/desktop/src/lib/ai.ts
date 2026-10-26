@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { get, set } from "idb-keyval";
 import {
   AiError,
+  aiViaServer,
   CATEGORIZE_SCHEMA,
   cleanTags,
   describeCapture,
@@ -52,7 +53,8 @@ void Promise.all([get<string>("setting:gemini-key", kv), get<boolean>("setting:a
 
 function key(): string {
   const k = useAi.getState().key;
-  if (!k) throw new AiError("no-key");
+  // sem chave aqui, o servidor self-hosted pode responder com a dele
+  if (!k && !aiViaServer()) throw new AiError("no-key");
   return k;
 }
 

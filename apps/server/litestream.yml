@@ -1,0 +1,14 @@
+# Backup contínuo do banco. Restaurar: veja o README do servidor.
+dbs:
+  - path: /data/myndshelf.db
+    replicas:
+      - type: file
+        path: /backups/myndshelf.db
+        retention: 720h
+      # S3 / MinIO / Backblaze B2 (descomente e ajuste):
+      # - type: s3
+      #   bucket: myndshelf
+      #   path: myndshelf.db
+      #   endpoint: http://minio.lan:9000
+      #   access-key-id: ...
+      #   secret-access-key: ...

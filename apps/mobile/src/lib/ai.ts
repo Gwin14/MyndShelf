@@ -3,6 +3,7 @@ import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import {
   AiError,
+  aiViaServer,
   CATEGORIZE_SCHEMA,
   cleanTags,
   describeCapture,
@@ -17,7 +18,8 @@ import {
   type LibraryRef,
 } from "@myndshelf/core";
 import type { CaptureItem, Creation } from "@myndshelf/types";
-import { creationFile, docKindOf } from "./files";
+import { docKindOf } from "./files";
+import { ensureCreationFile } from "./sync";
 import { loadArticle } from "./reader";
 import { library, prefs } from "./store";
 
@@ -53,7 +55,8 @@ void Promise.all([SecureStore.getItemAsync(KEY_ITEM).catch(() => null), prefs.ge
 
 function key(): string {
   const k = useAi.getState().key;
-  if (!k) throw new AiError("no-key");
+  // sem chave aqui, o servidor self-hosted pode responder com a dele
+  if (!k && !aiViaServer()) throw new AiError("no-key");
   return k;
 }
 
@@ -125,7 +128,7 @@ async function captureParts(item: CaptureItem): Promise<AiPart[]> {
 /** Criações de texto vão como texto; PDF, imagem e áudio vão como arquivo — o Gemini lê PDF sozinho. */
 async function creationParts(c: Creation): Promise<AiPart[]> {
   const parts: AiPart[] = [{ text: describeCreation(c) }];
-  const file = creationFile(c);
+  const file = await ensureCreationFile(c);
   const kind = docKindOf(c);
   if (!file) {
     const preview = dataUrlPart(c.preview);

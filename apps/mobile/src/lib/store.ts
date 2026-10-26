@@ -3,7 +3,7 @@ import { createLibraryStore, type LibraryState } from "@myndshelf/core";
 import type { StateStorage } from "zustand/middleware";
 import { useStore } from "zustand";
 
-const storage: StateStorage = {
+export const storage: StateStorage = {
   getItem: (key) => AsyncStorage.getItem(key),
   setItem: (key, value) => AsyncStorage.setItem(key, value),
   removeItem: (key) => AsyncStorage.removeItem(key),
