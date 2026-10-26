@@ -1,5 +1,5 @@
 import { createStore } from "zustand/vanilla";
-import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
+import { persist, type PersistStorage, type StateStorage } from "zustand/middleware";
 import type {
   BoardNode,
   CaptureItem,
@@ -53,6 +53,43 @@ export interface LibraryActions {
 
 export type LibraryState = LibraryData & LibraryActions;
 
+/**
+ * Grava o acervo só quando as mudanças param (ou a cada `maxWait`).
+ * Com as prévias em data URL o JSON passa de alguns MB: serializar a cada
+ * toque travava a interface, principalmente no celular.
+ */
+function deferredJSONStorage<S>(storage: StateStorage, delay = 800, maxWait = 5000): PersistStorage<S> & { flush(): Promise<void> } {
+  let pending: { name: string; value: unknown } | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let since = 0;
+  const flush = async () => {
+    clearTimeout(timer);
+    timer = undefined;
+    const p = pending;
+    pending = undefined;
+    if (p) await storage.setItem(p.name, JSON.stringify(p.value));
+  };
+  return {
+    async getItem(name) {
+      const raw = await storage.getItem(name);
+      return raw ? JSON.parse(raw) : null;
+    },
+    setItem(name, value) {
+      const now = Date.now();
+      if (!pending) since = now;
+      pending = { name, value };
+      clearTimeout(timer);
+      timer = setTimeout(() => void flush(), Math.max(0, Math.min(delay, since + maxWait - now)));
+    },
+    removeItem(name) {
+      pending = undefined;
+      clearTimeout(timer);
+      return storage.removeItem(name);
+    },
+    flush,
+  };
+}
+
 const empty: LibraryData = { captures: [], feeds: [], feedEntries: [], creations: [], shelves: [], projects: [] };
 
 /**
@@ -60,7 +97,8 @@ const empty: LibraryData = { captures: [], feeds: [], feedEntries: [], creations
  * Cada app injeta seu `StateStorage` (IndexedDB no desktop, MMKV no mobile…).
  */
 export function createLibraryStore(storage: StateStorage, name = "myndshelf-library") {
-  return createStore<LibraryState>()(
+  const persisted = deferredJSONStorage<Partial<LibraryState>>(storage);
+  const store = createStore<LibraryState>()(
     persist(
       (set, get) => {
         const patchProject = (id: string, fn: (p: Project) => Partial<Project>) =>
@@ -262,11 +300,13 @@ export function createLibraryStore(storage: StateStorage, name = "myndshelf-libr
       {
         name,
         version: 1,
-        storage: createJSONStorage(() => storage),
+        storage: persisted,
         partialize: ({ captures, feeds, feedEntries, creations, shelves, projects }) => ({ captures, feeds, feedEntries, creations, shelves, projects }),
       },
     ),
   );
+  /** Grava agora o que estiver pendente — chame quando o app for para o fundo ou a janela fechar. */
+  return Object.assign(store, { flush: persisted.flush });
 }
 
 export type LibraryStore = ReturnType<typeof createLibraryStore>;

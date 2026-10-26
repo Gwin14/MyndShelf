@@ -1,3 +1,4 @@
+import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createLibraryStore, type LibraryState } from "@myndshelf/core";
 import type { StateStorage } from "zustand/middleware";
@@ -10,6 +11,9 @@ export const storage: StateStorage = {
 };
 
 export const library = createLibraryStore(storage);
+
+// o acervo grava com atraso; indo para o fundo, grava já (o iOS pode encerrar o app)
+AppState.addEventListener("change", (s) => s !== "active" && void library.flush());
 
 export function useLibrary<T>(selector: (s: LibraryState) => T): T {
   return useStore(library, selector);

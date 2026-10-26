@@ -14,6 +14,10 @@ export const idbStorage: StateStorage = {
 
 export const library = createLibraryStore(idbStorage);
 
+// o acervo grava com atraso; ao esconder ou fechar a janela, grava já
+document.addEventListener("visibilitychange", () => document.hidden && void library.flush());
+window.addEventListener("pagehide", () => void library.flush());
+
 export function useLibrary<T>(selector: (s: LibraryState) => T): T {
   return useStore(library, selector);
 }
