@@ -11,6 +11,7 @@ export * from "./sites";
 export * from "./places";
 export * from "./games";
 export * from "./products";
+export * from "./social";
 export * from "./ai";
 export * from "./layout";
 export * from "./backup";

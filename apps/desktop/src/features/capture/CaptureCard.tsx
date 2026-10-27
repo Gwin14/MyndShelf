@@ -1,4 +1,4 @@
-import { BookOpen, Expand, MapPin, Play } from "lucide-react";
+import { BookOpen, Expand, MapPin, MessageCircle, Play } from "lucide-react";
 import { VIEW_LABELS, viewModeOf, type ViewMode } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
 import { useGlow } from "../../lib/ai";
@@ -11,6 +11,7 @@ const VIEW_ICONS: Record<ViewMode, React.JSX.Element> = {
   read: <BookOpen size={11} />,
   image: <Expand size={11} />,
   map: <MapPin size={11} />,
+  post: <MessageCircle size={11} />,
 };
 
 export function CaptureCard({

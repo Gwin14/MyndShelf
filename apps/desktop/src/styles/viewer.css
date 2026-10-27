@@ -355,10 +355,12 @@
   border: 1px solid var(--r-line);
   background: color-mix(in srgb, var(--r-ink) 5%, transparent);
 }
-.reader-body table {
-  display: block;
+/* tabelas largas rolam dentro do próprio bloco (o leitor embrulha cada uma) */
+.reader-table {
   overflow-x: auto;
   margin: 1.4em 0;
+}
+.reader-body table {
   border-collapse: collapse;
   font-size: 0.8em;
 }
@@ -373,6 +375,232 @@
   border: 0;
   border-top: 1px solid var(--r-line);
   margin: 2em 0;
+}
+
+/* ── índice e links (painel sobre o texto) ── */
+.reader-index {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: min(320px, calc(100% - 44px));
+  max-height: calc(100% - 36px);
+  border-radius: 14px;
+  border: 1px solid var(--r-line);
+  background: var(--c-night);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.8);
+  color: var(--r-ink);
+  animation: rise var(--t-base) var(--ease);
+}
+.reader[data-theme="paper"] .reader-index {
+  background: #f4ecdb;
+}
+.reader-index-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-bottom: 1px solid var(--r-line);
+}
+.reader-index-tabs button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--r-dim);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.reader-index-tabs button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--r-ink) 10%, transparent);
+  color: var(--r-ink);
+}
+.reader-index-tabs .mono {
+  font-size: 9.5px;
+  opacity: 0.7;
+}
+.reader-chapters,
+.reader-links {
+  overflow-y: auto;
+  padding: 8px;
+}
+.reader-chapter {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--r-dim);
+  font-family: var(--f-display);
+  font-size: 16px;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+.reader-chapter[data-level="3"] {
+  padding-left: 22px;
+  font-size: 14px;
+  font-style: italic;
+}
+.reader-chapter:hover {
+  background: color-mix(in srgb, var(--r-ink) 6%, transparent);
+  color: var(--r-ink);
+}
+.reader-chapter[data-active] {
+  border-left-color: var(--r-accent);
+  color: var(--r-ink);
+}
+.reader-link-group + .reader-link-group {
+  margin-top: 14px;
+}
+.reader-link-group .kicker {
+  margin: 4px 10px 6px;
+}
+.reader-link {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--r-ink);
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+.reader-link:hover {
+  background: color-mix(in srgb, var(--r-ink) 6%, transparent);
+}
+.reader-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reader-link em {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--r-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reader-index-empty {
+  margin: 8px 10px;
+  font-family: var(--f-display);
+  font-style: italic;
+  color: var(--r-dim);
+}
+
+/* ── Wikipedia: infobox e miniaturas flutuam ao lado do texto ── */
+.reader-body[data-site="wikipedia"] {
+  font-size: calc(var(--reader-size, 19px) * 0.96);
+}
+.reader-body[data-site="wikipedia"] > p:first-of-type::first-letter,
+.reader-body[data-site="wikipedia"] .mw-parser-output > p:first-of-type::first-letter {
+  float: none;
+  font-size: inherit;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: inherit;
+  margin: 0;
+}
+.reader-body[data-site="wikipedia"] .shortdescription {
+  margin: -0.4em 0 1.2em;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--r-accent);
+}
+.reader-body[data-site="wikipedia"] h2 {
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--r-line);
+}
+.reader-body[data-site="wikipedia"] table.infobox,
+.reader-body[data-site="wikipedia"] .infobox {
+  float: right;
+  clear: right;
+  width: 300px;
+  max-width: 44%;
+  margin: 0.2em 0 1.2em 1.6em;
+  padding: 10px 12px;
+  border: 1px solid var(--r-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--r-ink) 4%, transparent);
+  font-size: 0.7em;
+  line-height: 1.45;
+}
+.reader-body[data-site="wikipedia"] .infobox th,
+.reader-body[data-site="wikipedia"] .infobox td {
+  padding: 3px 4px;
+  border: 0;
+  vertical-align: top;
+}
+.reader-body[data-site="wikipedia"] .infobox .infobox-above,
+.reader-body[data-site="wikipedia"] .infobox-title {
+  font-family: var(--f-display);
+  font-size: 1.35em;
+  text-align: center;
+}
+.reader-body[data-site="wikipedia"] .thumb,
+.reader-body[data-site="wikipedia"] .mw-halign-right,
+.reader-body[data-site="wikipedia"] figure.mw-halign-right {
+  float: right;
+  clear: right;
+  max-width: 300px;
+  margin: 0.2em 0 1em 1.4em;
+}
+.reader-body[data-site="wikipedia"] .thumb.tleft,
+.reader-body[data-site="wikipedia"] .mw-halign-left {
+  float: left;
+  clear: left;
+  margin: 0.2em 1.4em 1em 0;
+}
+.reader-body[data-site="wikipedia"] .thumb img,
+.reader-body[data-site="wikipedia"] .thumbinner img {
+  margin: 0;
+}
+.reader-body[data-site="wikipedia"] .thumbcaption,
+.reader-body[data-site="wikipedia"] .thumbinner > div:last-child {
+  padding: 6px 2px 0;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--r-dim);
+}
+.reader-body[data-site="wikipedia"] .mw-halign-center,
+.reader-body[data-site="wikipedia"] .center {
+  text-align: center;
+}
+.reader-body[data-site="wikipedia"] .navbox,
+.reader-body[data-site="wikipedia"] .vertical-navbox {
+  display: none;
+}
+@media (max-width: 640px) {
+  .reader-body table.infobox,
+  .reader-body[data-site="wikipedia"] .infobox,
+  .reader-body[data-site="wikipedia"] .thumb,
+  .reader-body[data-site="wikipedia"] .mw-halign-right,
+  .reader-body[data-site="wikipedia"] .thumb.tleft {
+    float: none;
+    width: auto;
+    max-width: 100%;
+    margin: 1.2em 0;
+  }
 }
 
 /* ── atalho de abrir no card ── */

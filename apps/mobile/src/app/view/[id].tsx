@@ -39,12 +39,18 @@ export default function ViewerScreen() {
   const insets = useSafeAreaInsets();
   const mode = item ? viewModeOf(item) : undefined;
 
+  // posts ainda não têm visualização própria no celular: abrem no navegador
+  useEffect(() => {
+    if (item && mode === "post" && item.url) void openInApp(item.url).then(() => router.back());
+  }, [item, mode]);
+
   return (
     <View style={styles.root}>
       {item && mode === "play" && <Player item={item} />}
       {item && mode === "read" && <Reader item={item} top={insets.top + 56} />}
       {item && mode === "image" && <Picture item={item} />}
       {item && mode === "map" && <PlaceMap item={item} />}
+      {item && mode === "post" && <Empty title="Post aberto no navegador." />}
       {(!item || !mode) && <Empty title="Nada para mostrar aqui." />}
 
       <View style={[styles.bar, { paddingTop: insets.top + 6 }]} pointerEvents="box-none">

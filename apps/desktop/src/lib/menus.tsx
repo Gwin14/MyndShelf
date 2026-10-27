@@ -14,6 +14,7 @@ import {
   Library,
   Link2,
   MapPin,
+  MessageCircle,
   Orbit,
   PanelRight,
   Play,
@@ -51,6 +52,7 @@ const VIEW_ICONS: Record<ViewMode, React.ReactNode> = {
   read: <BookOpen size={S} />,
   image: <Eye size={S} />,
   map: <MapPin size={S} />,
+  post: <MessageCircle size={S} />,
 };
 
 /* ───────────────────────── submenus comuns ───────────────────────── */

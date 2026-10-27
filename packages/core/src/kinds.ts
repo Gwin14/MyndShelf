@@ -10,6 +10,10 @@ interface Rule {
 
 /** Ordem importa: a primeira regra que bate vence. */
 const RULES: Rule[] = [
+  { kind: "social", host: /(^|\.)(x|twitter)\.com$/, path: /\/status\/\d+/ },
+  { kind: "social", host: /(^|\.)threads\.net$/, path: /\/@[^/]+\/post\// },
+  { kind: "social", host: /(^|\.)reddit\.com$/, path: /\/r\/[^/]+\/comments\// },
+  { kind: "social", host: /(^|\.)instagram\.com$/, path: /^\/(p|reel|reels|tv)\/[^/]+/ },
   { kind: "game", host: /^(store\.steampowered\.com|steamcommunity\.com|s\.team)$/, path: /^\/(app|a)\/\d+/ },
   { kind: "game", host: /(^|\.)epicgames\.com$/, path: /\/p\// },
   { kind: "game", host: /(^|\.)gog\.com$/, path: /\/game\// },
@@ -82,6 +86,7 @@ export const KIND_LABELS: Record<CaptureKind, string> = {
   image: "Imagem",
   code: "Código",
   place: "Lugar",
+  social: "Post",
   note: "Nota",
   link: "Link",
 };

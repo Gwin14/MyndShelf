@@ -1,17 +1,18 @@
-import type { CaptureItem, CaptureKind, PlaceInfo } from "@myndshelf/types";
+import type { CaptureItem, CaptureKind, PlaceInfo, SocialInfo } from "@myndshelf/types";
 import { detectKind, hostOf, youtubeId } from "./kinds";
 import { parseOpenGraph } from "./opengraph";
 import { improveImage, siteDetails, type SiteDetails } from "./sites";
 import { isShortMapUrl, parsePlaceUrl, placeTitle, resolvePlace } from "./places";
 import { formatPrice, productFromHtml, productStoreOf } from "./products";
 import { cleanGameTitle, gameStoreOf, lookupGame, sameGame, steamDetails, type GameDetails } from "./games";
+import { parseRedditOembed, parseSocialHtml, parseXTweet, redditOembedUrl, SOCIAL_LABELS, socialNetworkOf, xSyndicationUrl } from "./social";
 
 /** Cada plataforma fornece seu jeito de baixar HTML (Tauri/Rust, servidor, RN…). */
 export type HtmlFetcher = (url: string) => Promise<string>;
 
 export type CaptureEnrichment = Pick<
   CaptureItem,
-  "kind" | "title" | "description" | "image" | "siteName" | "favicon" | "author" | "place" | "product"
+  "kind" | "title" | "description" | "image" | "siteName" | "favicon" | "author" | "place" | "product" | "social"
 >;
 
 /** Tipos que só viram "produto" quando nada mais específico bateu (livro, jogo, música… têm prioridade). */
@@ -60,6 +61,7 @@ export async function enrichLink(url: string, fetchHtml: HtmlFetcher): Promise<C
   const byline = splitByline(site.title ?? (cleanTitle(data.title, data.siteName) || host || url));
 
   if (kind === "game") return enrichGame(url, fetchHtml, { ...data, title: byline.title });
+  if (kind === "social") return enrichSocial(url, fetchHtml, html, data);
 
   // produto de loja: só quando nenhum tipo com prioridade reconheceu o link
   if (GENERIC_KINDS.includes(kind) || (kind === "image" && site.product)) {
@@ -98,6 +100,60 @@ export async function enrichLink(url: string, fetchHtml: HtmlFetcher): Promise<C
     favicon: data.favicon,
     author: site.author ?? byline.author ?? data.author,
     place: geo ? { ...geo, name: byline.title, provider: data.siteName ?? host } : undefined,
+  };
+}
+
+/** Posts: o texto e a mídia vêm da própria rede; o OpenGraph completa o que faltar. */
+async function enrichSocial(
+  url: string,
+  fetchText: HtmlFetcher,
+  html: string,
+  og: ReturnType<typeof parseOpenGraph>,
+): Promise<CaptureEnrichment> {
+  const network = socialNetworkOf(url)!;
+  let social: SocialInfo | undefined;
+  const api = xSyndicationUrl(url);
+  if (api) {
+    try {
+      social = parseXTweet(await fetchText(api));
+    } catch {
+      /* sem a API — fica com a página */
+    }
+  }
+  social ??= parseSocialHtml(network, url, html);
+
+  // o Reddit responde à página com um desafio anti-bot (sem texto): usamos o oEmbed público
+  let oembedTitle: string | undefined;
+  if (network === "reddit" && !social.text) {
+    try {
+      const o = parseRedditOembed(await fetchText(redditOembedUrl(url)));
+      oembedTitle = o?.title;
+      if (o?.author) social = { ...social, name: `u/${o.author}` };
+    } catch {
+      /* sem oEmbed — fica só com a URL */
+    }
+  }
+
+  const label = SOCIAL_LABELS[network];
+  const firstLine = social.text?.split("\n")[0].slice(0, 90);
+  // no Reddit o título do post é o que importa (o og:title da página de desafio é só "Reddit")
+  const title =
+    network === "reddit"
+      ? oembedTitle || og.title?.replace(/\s*:\s*r\/\w+$/, "") || firstLine || label
+      : social.name
+        ? `${social.name}${firstLine ? `: ${firstLine}` : ""}`
+        : cleanTitle(og.title, og.siteName) || firstLine || label;
+
+  const firstImage = social.media.find((m) => m.type === "image")?.url ?? social.media.find((m) => m.poster)?.poster;
+  return {
+    kind: "social",
+    title,
+    description: social.text,
+    image: firstImage ?? improveImage(og.image),
+    siteName: label,
+    favicon: og.favicon,
+    author: social.handle ? `${social.name ?? social.handle} · @${social.handle}` : social.name,
+    social,
   };
 }
 

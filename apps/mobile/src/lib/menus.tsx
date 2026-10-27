@@ -13,6 +13,7 @@ import {
   Globe,
   Link2,
   MapPin,
+  MessageCircle,
   Orbit,
   PanelBottom,
   Play,
@@ -48,6 +49,7 @@ const VIEW_ICONS: Record<ViewMode, React.ReactNode> = {
   read: <BookOpen size={S} color={C} />,
   image: <Eye size={S} color={C} />,
   map: <MapPin size={S} color={C} />,
+  post: <MessageCircle size={S} color={C} />,
 };
 
 export function copyText(text: string, label = "Copiado") {

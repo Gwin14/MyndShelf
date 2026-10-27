@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { CaptureItem } from "@myndshelf/types";
-import { formatCoords, formatPrice, hostOf, KIND_LABELS } from "@myndshelf/core";
+import { formatCoords, formatPrice, hostOf, KIND_LABELS, SOCIAL_FORMAT_LABELS, SOCIAL_LABELS } from "@myndshelf/core";
 import { MapTiles } from "../../../components/MapTiles";
 import { Play } from "lucide-react";
 import { Art } from "./Art";
@@ -183,6 +183,31 @@ function ArticleCover({ item }: Props) {
   );
 }
 
+/** Post: cartão de rede social, com o autor, o começo do texto e a mídia. */
+function SocialCover({ item }: Props) {
+  const s = item.social;
+  const who = s?.name ?? s?.handle ?? SOCIAL_LABELS[s?.network ?? "x"];
+  const text = s?.text ?? item.description ?? item.title;
+  const hasVideo = s?.media.some((m) => m.type === "video");
+  return (
+    <div className="cv-social" data-format={s?.format ?? "post"}>
+      <div className="cv-social-head">
+        {s?.avatar ? <img className="cv-social-avatar" src={s.avatar} alt="" referrerPolicy="no-referrer" /> : <span className="cv-social-avatar cv-social-letter">{who.charAt(0)}</span>}
+        <span className="cv-social-who">{who}</span>
+        <span className="cv-social-net mono">{SOCIAL_LABELS[s?.network ?? "x"]}</span>
+      </div>
+      <p className="cv-social-text">{text}</p>
+      {item.image && (
+        <div className="cv-social-media">
+          <Art src={item.image} />
+          {hasVideo && <Play size={18} className="cv-social-play" />}
+        </div>
+      )}
+      <span className="cv-social-tag mono">{SOCIAL_FORMAT_LABELS[s?.format ?? "post"]}</span>
+    </div>
+  );
+}
+
 function ImageCover({ item }: Props) {
   return (
     <div className="cv-print">
@@ -291,6 +316,7 @@ const COVERS: Record<CaptureItem["kind"], (p: Props) => React.JSX.Element> = {
   image: ImageCover,
   code: CodeCover,
   place: PlaceCover,
+  social: SocialCover,
   note: NoteCover,
   link: LinkCover,
 };

@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { AlignLeft, ArrowLeft, Copy, ExternalLink, Minus, Moon, Plus, Sun } from "lucide-react";
+import { AlignLeft, ArrowLeft, Copy, ExternalLink, List, Minus, Moon, Plus, Sun } from "lucide-react";
 import { formatCoords, getEmbed, hostOf, mapLinks, viewModeOf } from "@myndshelf/core";
 import type { CaptureItem } from "@myndshelf/types";
 import { RunOutput } from "../../components/RunOutput";
 import { summarizeCapture, useAiRun } from "../../lib/ai";
 import { openExternal } from "../../lib/platform";
-import { loadArticle, type Article } from "../../lib/reader";
+import { loadArticle, type Article, type ArticleLink, type Chapter } from "../../lib/reader";
 import { Cover } from "./covers/Cover";
+import { SocialPost } from "./SocialPost";
 
 /** Abre o conteúdo do item dentro do app: player, leitor ou imagem em tela cheia. */
 export function Viewer({ item, onClose }: { item: CaptureItem | undefined; onClose: () => void }) {
@@ -46,6 +47,7 @@ export function Viewer({ item, onClose }: { item: CaptureItem | undefined; onClo
       {mode === "image" && <Lightbox item={item} />}
       {mode === "read" && <Reader item={item} />}
       {mode === "map" && <PlaceMap item={item} />}
+      {mode === "post" && <SocialPost item={item} />}
     </div>,
     document.body,
   );
@@ -151,6 +153,37 @@ function Lightbox({ item }: { item: CaptureItem }) {
 
 type ReaderState = { status: "loading" } | { status: "error" } | { status: "ready"; article: Article };
 
+/** O último capítulo que já passou da linha de leitura é o que está na tela. */
+function currentChapter(scroller: HTMLElement, chapters: Chapter[]): string | undefined {
+  const line = scroller.getBoundingClientRect().top + 120;
+  let current: string | undefined;
+  for (const c of chapters) {
+    const h = scroller.querySelector<HTMLElement>(`#${c.id}`);
+    if (h && h.getBoundingClientRect().top <= line) current = c.id;
+  }
+  return current;
+}
+
+function LinkGroup({ title, links, showHost }: { title: string; links: ArticleLink[]; showHost: boolean }) {
+  return (
+    <section className="reader-link-group">
+      <p className="kicker">
+        {title} · {links.length}
+      </p>
+      {links.length ? (
+        links.map((l) => (
+          <button key={l.href} className="reader-link" title={l.href} onClick={() => openExternal(l.href)}>
+            <span>{l.text}</span>
+            {showHost && <em className="mono">{l.host}</em>}
+          </button>
+        ))
+      ) : (
+        <p className="reader-index-empty">Nenhum link.</p>
+      )}
+    </section>
+  );
+}
+
 function Reader({ item }: { item: CaptureItem }) {
   const [state, setState] = useState<ReaderState>({ status: "loading" });
   const [paper, setPaper] = useState(() => localStorage.getItem("reader-theme") === "paper");
@@ -159,6 +192,9 @@ function Reader({ item }: { item: CaptureItem }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [showSummary, setShowSummary] = useState(false);
   const summary = useAiRun();
+  const [indexOpen, setIndexOpen] = useState(false);
+  const [indexTab, setIndexTab] = useState<"chapters" | "links">("chapters");
+  const [active, setActive] = useState<string>();
 
   const toggleSummary = () => {
     const next = !showSummary;
@@ -187,7 +223,10 @@ function Reader({ item }: { item: CaptureItem }) {
   const onScroll = () => {
     const el = scroller.current!;
     setProgress(el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight));
+    if (state.status === "ready") setActive(currentChapter(el, state.article.chapters));
   };
+
+  const jumpTo = (id: string) => scroller.current?.querySelector<HTMLElement>(`#${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   // links do texto abrem fora — o webview nunca sai do app
   const onClick = (e: React.MouseEvent) => {
@@ -214,10 +253,45 @@ function Reader({ item }: { item: CaptureItem }) {
         <button className="icon-btn" onClick={() => setPaper((p) => !p)} title={paper ? "Modo noite" : "Modo papel"}>
           {paper ? <Moon size={14} /> : <Sun size={14} />}
         </button>
+        <button className="icon-btn" aria-pressed={indexOpen} onClick={() => setIndexOpen((o) => !o)} title="Índice e links">
+          <List size={14} />
+        </button>
         <button className="icon-btn" aria-pressed={showSummary} onClick={toggleSummary} title="Resumo">
           <AlignLeft size={14} />
         </button>
       </div>
+
+      {indexOpen && article && (
+        <aside className="reader-index">
+          <div className="reader-index-tabs" role="tablist">
+            <button role="tab" aria-selected={indexTab === "chapters"} onClick={() => setIndexTab("chapters")}>
+              Capítulos <span className="mono">{article.chapters.length}</span>
+            </button>
+            <button role="tab" aria-selected={indexTab === "links"} onClick={() => setIndexTab("links")}>
+              Links <span className="mono">{article.links.inside.length + article.links.outside.length}</span>
+            </button>
+          </div>
+
+          {indexTab === "chapters" ? (
+            article.chapters.length ? (
+              <nav className="reader-chapters">
+                {article.chapters.map((c: Chapter) => (
+                  <button key={c.id} className="reader-chapter" data-level={c.level} data-active={active === c.id || undefined} onClick={() => jumpTo(c.id)}>
+                    {c.text}
+                  </button>
+                ))}
+              </nav>
+            ) : (
+              <p className="reader-index-empty">Este texto não tem capítulos.</p>
+            )
+          ) : (
+            <div className="reader-links">
+              <LinkGroup title="Neste site" links={article.links.inside} showHost={false} />
+              <LinkGroup title="De fora" links={article.links.outside} showHost />
+            </div>
+          )}
+        </aside>
+      )}
 
       <div className="reader-scroll" ref={scroller} onScroll={onScroll}>
         <article className="reader-page">
@@ -255,7 +329,7 @@ function Reader({ item }: { item: CaptureItem }) {
           {article && (
             <>
               {!hasLeadImage && item.image && <img className="reader-hero" src={item.image} alt="" referrerPolicy="no-referrer" />}
-              <div className="reader-body" onClick={onClick} dangerouslySetInnerHTML={{ __html: article.html }} />
+              <div className="reader-body" data-site={article.site} onClick={onClick} dangerouslySetInnerHTML={{ __html: article.html }} />
               <p className="reader-end">✦</p>
             </>
           )}

@@ -12,6 +12,7 @@ export type CaptureKind =
   | "image"
   | "code"
   | "place"
+  | "social"
   | "note"
   | "link";
 
@@ -54,6 +55,50 @@ export interface ProductInfo {
   available?: boolean;
 }
 
+export type SocialNetwork = "x" | "threads" | "reddit" | "instagram";
+
+/**
+ * Formato do post: define como ele aparece. Texto e mídia vêm da própria rede
+ * (ou do OpenGraph quando ela não entrega dados abertos).
+ */
+export type SocialFormat = "post" | "carousel" | "image" | "video" | "reel";
+
+export interface SocialMedia {
+  type: "image" | "video";
+  url: string;
+  /** quadro inicial do vídeo */
+  poster?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface SocialComment {
+  author?: string;
+  text: string;
+  score?: number;
+}
+
+/** Presente quando o item é um post de rede social. */
+export interface SocialInfo {
+  network: SocialNetwork;
+  format: SocialFormat;
+  /** nome de exibição e @ do autor */
+  name?: string;
+  handle?: string;
+  avatar?: string;
+  /** texto do post (legenda, tuíte, corpo do post do Reddit) */
+  text?: string;
+  /** comunidade (subreddit) */
+  community?: string;
+  media: SocialMedia[];
+  likes?: number;
+  replies?: number;
+  reposts?: number;
+  publishedAt?: number;
+  /** comentários em destaque (Reddit) */
+  comments?: SocialComment[];
+}
+
 export type CaptureStatus = "loading" | "ready" | "error";
 
 export interface CaptureItem {
@@ -72,6 +117,8 @@ export interface CaptureItem {
   place?: PlaceInfo;
   /** Presente quando o item é um produto de loja. */
   product?: ProductInfo;
+  /** Presente quando o item é um post de rede social. */
+  social?: SocialInfo;
   tags: string[];
   status: CaptureStatus;
   /** Matiz (0–360) usada para tingir capas sem imagem. */

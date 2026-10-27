@@ -558,6 +558,7 @@ const COVERS: Record<CaptureItem["kind"], (p: CoverProps) => React.JSX.Element> 
   image: ImageCover,
   code: CodeCover,
   place: PlaceCover,
+  social: LinkCover,
   note: NoteCover,
   link: LinkCover,
 };

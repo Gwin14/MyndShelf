@@ -1,0 +1,406 @@
+/* ── posts de rede social (viewer) ── */
+.post-scroll {
+  position: relative;
+  overflow-x: hidden;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 40px 20px 80px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.post-card {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 26px 26px 22px;
+  border-radius: 18px;
+  border: 1px solid var(--c-line);
+  background: color-mix(in srgb, var(--c-night) 82%, transparent);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+  animation: rise var(--t-slow) var(--ease);
+}
+.post-head {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.post-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--c-dusk);
+}
+.post-avatar-letter {
+  display: grid;
+  place-items: center;
+  font-family: var(--f-display);
+  font-size: 22px;
+  color: var(--c-void);
+  background: var(--g-flare);
+}
+.post-who {
+  display: grid;
+  min-width: 0;
+}
+.post-who strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 15px;
+}
+.post-who .mono {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--c-paper-mute);
+}
+.post-badge {
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-line-strong);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-paper-dim);
+}
+.post-text {
+  font-size: 19px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.post-text p {
+  margin: 0 0 0.6em;
+}
+.post-title {
+  margin: 0 0 14px;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.post-card .prose {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--c-paper-dim);
+}
+
+/* mídia */
+.post-image,
+.post-video,
+.post-embed {
+  display: block;
+  width: 100%;
+  max-height: 72vh;
+  margin: 18px 0 0;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 0;
+  background: #000;
+}
+.post-embed {
+  height: min(74vh, 720px);
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.post-open {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.post-grid {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.post-grid[data-count="2"] {
+  grid-template-columns: 1fr 1fr;
+}
+.post-grid[data-count="3"],
+.post-grid[data-count="4"] {
+  grid-template-columns: 1fr 1fr;
+}
+.post-grid[data-count="3"] img:first-child {
+  grid-row: span 2;
+}
+.post-grid img {
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  max-height: 340px;
+  object-fit: cover;
+}
+.post-carousel {
+  position: relative;
+  margin-top: 18px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+.post-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.post-track::-webkit-scrollbar {
+  display: none;
+}
+.post-slide {
+  flex: 0 0 100%;
+  margin: 0;
+  scroll-snap-align: center;
+  display: grid;
+  place-items: center;
+  max-height: 72vh;
+}
+.post-slide img {
+  width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+}
+.post-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: rgba(6, 5, 11, 0.7);
+  font-size: 11px;
+  color: var(--c-paper);
+}
+.post-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.post-dots button {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast);
+}
+.post-dots button[aria-current="true"] {
+  background: var(--c-paper);
+  transform: scale(1.25);
+}
+
+/* rodapé de números */
+.post-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-line);
+  font-size: 12px;
+  color: var(--c-paper-mute);
+}
+.post-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.post-stats time {
+  margin-left: auto;
+}
+
+/* comentários (Reddit) */
+.post-comments {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-line);
+}
+.post-comments .kicker {
+  margin: 0 0 10px;
+}
+.post-comment {
+  padding: 10px 0 10px 14px;
+  border-left: 2px solid var(--c-line-strong);
+  margin-bottom: 8px;
+}
+.post-comment .mono {
+  font-size: 10.5px;
+  color: var(--c-paper-mute);
+}
+.post-comment p {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--c-paper-dim);
+}
+
+/* Instagram: mídia em destaque, legenda ao lado */
+.post-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  max-width: 1180px;
+  margin: 0 auto;
+  align-items: start;
+}
+.post-split[data-format="reel"] {
+  grid-template-columns: minmax(0, 420px) 360px;
+  justify-content: center;
+}
+.post-stage {
+  position: sticky;
+  top: 0;
+  min-width: 0;
+}
+.post-stage .post-image,
+.post-stage .post-video,
+.post-stage .post-carousel {
+  margin-top: 0;
+}
+.post-side {
+  padding: 22px 22px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--c-line);
+  background: color-mix(in srgb, var(--c-night) 82%, transparent);
+}
+.post-side .post-text {
+  font-size: 16px;
+}
+.post-side .post-title {
+  font-size: 28px;
+}
+@media (max-width: 860px) {
+  .post-split,
+  .post-split[data-format="reel"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .post-stage {
+    position: static;
+  }
+}
+
+/* ── cartão do post na estante ── */
+.cv-social {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  padding: 14px 15px 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--c-night) 92%, transparent);
+  border: 1px solid var(--c-line);
+  box-shadow: 0 22px 34px -18px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+.cv-social-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.cv-social-avatar {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.cv-social-letter {
+  display: grid;
+  place-items: center;
+  font-family: var(--f-display);
+  font-size: 15px;
+  color: var(--c-void);
+  background: var(--g-flare);
+}
+.cv-social-who {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cv-social-net {
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-paper-mute);
+}
+.cv-social-text {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--c-paper);
+}
+.cv-social-media {
+  position: relative;
+  flex: 1;
+  min-height: 90px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.cv-social-media .art {
+  position: absolute;
+  inset: 0;
+}
+.cv-social-play {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 6px;
+  border-radius: 50%;
+  background: rgba(6, 5, 11, 0.7);
+  color: var(--c-paper);
+}
+.cv-social-tag {
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-paper-dim);
+  border: 1px solid var(--c-line-strong);
+}
+
+.post-note {
+  margin: 10px 0 0;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--c-paper-mute);
+}
+.post-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-amber);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

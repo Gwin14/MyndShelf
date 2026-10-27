@@ -15,6 +15,7 @@ import "./styles/covers.css";
 import "./styles/shelf.css";
 import "./styles/projects.css";
 import "./styles/viewer.css";
+import "./styles/social.css";
 import "./styles/feeds.css";
 import "./styles/dropzone.css";
 import "./styles/contextmenu.css";
