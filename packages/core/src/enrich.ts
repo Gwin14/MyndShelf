@@ -5,7 +5,17 @@ import { improveImage, siteDetails, type SiteDetails } from "./sites";
 import { isShortMapUrl, parsePlaceUrl, placeTitle, resolvePlace } from "./places";
 import { formatPrice, productFromHtml, productStoreOf } from "./products";
 import { cleanGameTitle, gameStoreOf, lookupGame, sameGame, steamDetails, type GameDetails } from "./games";
-import { parseRedditOembed, parseSocialHtml, parseXTweet, redditOembedUrl, SOCIAL_LABELS, socialNetworkOf, xSyndicationUrl } from "./social";
+import {
+  instagramProfileUrl,
+  parseInstagramAvatar,
+  parseRedditOembed,
+  parseSocialHtml,
+  parseXTweet,
+  redditOembedUrl,
+  SOCIAL_LABELS,
+  socialNetworkOf,
+  xSyndicationUrl,
+} from "./social";
 
 /** Cada plataforma fornece seu jeito de baixar HTML (Tauri/Rust, servidor, RN…). */
 export type HtmlFetcher = (url: string) => Promise<string>;
@@ -131,6 +141,16 @@ async function enrichSocial(
       if (o?.author) social = { ...social, name: `u/${o.author}` };
     } catch {
       /* sem oEmbed — fica só com a URL */
+    }
+  }
+
+  // a página do post não traz a foto de quem postou; a do perfil traz
+  if (network === "instagram" && social.handle && !social.avatar) {
+    try {
+      const avatar = parseInstagramAvatar(await fetchText(instagramProfileUrl(social.handle)));
+      if (avatar) social = { ...social, avatar };
+    } catch {
+      /* sem perfil — fica a inicial */
     }
   }
 

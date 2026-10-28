@@ -98,3 +98,20 @@ export async function refreshCapture(id: string) {
     library.getState().updateCapture(id, { status: "error" });
   }
 }
+
+const healed = new Set<string>();
+
+/**
+ * Mídia de post expira (o CDN do Instagram assina as URLs por alguns dias): quando uma imagem
+ * falha, relê o post em silêncio — uma vez por sessão — e troca só a mídia e o autor.
+ */
+export function healCapture(id: string) {
+  const item = library.getState().captures.find((c) => c.id === id);
+  if (!item?.url || healed.has(id)) return;
+  healed.add(id);
+  enrich(item.url)
+    .then((data) => {
+      if (data.social) library.getState().updateCapture(id, { image: data.image, social: data.social });
+    })
+    .catch(() => {});
+}

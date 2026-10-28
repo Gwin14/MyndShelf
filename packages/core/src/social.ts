@@ -135,7 +135,13 @@ export function parseSocialHtml(network: SocialNetwork, url: string, html: strin
         ogDesc?.match(/-\s+([\w.]+)\s+(?:no|on)\s/i)?.[1]
       : undefined;
   const videoUrl = metaAll(html, "og:video:secure_url")[0] ?? metaAll(html, "og:video")[0] ?? metaAll(html, "og:video:url")[0];
-  const images = [...new Set(metaAll(html, "og:image:secure_url").concat(metaAll(html, "og:image")).map((u) => u.split("?")[0]))];
+  // og:image e og:image:secure_url repetem a mesma foto; compara sem a query, mas guarda a URL inteira:
+  // no CDN do Instagram a query é a assinatura (sem ela a imagem responde 403)
+  const byPath = new Map<string, string>();
+  for (const u of metaAll(html, "og:image:secure_url").concat(metaAll(html, "og:image"))) {
+    if (!byPath.has(u.split("?")[0])) byPath.set(u.split("?")[0], u);
+  }
+  const images = [...byPath.values()];
   const media: SocialMedia[] = [
     ...images.map((u) => ({ type: "image" as const, url: u })),
     ...(videoUrl ? [{ type: "video" as const, url: videoUrl }] : []),
@@ -170,6 +176,15 @@ export function parseSocialHtml(network: SocialNetwork, url: string, html: strin
     replies,
     publishedAt: network === "instagram" ? igDate(ogDesc) : undefined,
   };
+}
+
+/** Perfil do Instagram: a página pública traz a foto de perfil no og:image. */
+export function instagramProfileUrl(handle: string): string {
+  return `https://www.instagram.com/${handle}/`;
+}
+
+export function parseInstagramAvatar(html: string): string | undefined {
+  return metaAll(html, "og:image")[0];
 }
 
 /** "…no October 25, 2026: …" → data da publicação (só formatos que o JavaScript entende). */

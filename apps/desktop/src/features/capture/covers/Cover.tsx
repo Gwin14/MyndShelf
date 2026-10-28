@@ -1,9 +1,10 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { CaptureItem } from "@myndshelf/types";
 import { formatCoords, formatPrice, hostOf, KIND_LABELS, SOCIAL_FORMAT_LABELS, SOCIAL_LABELS } from "@myndshelf/core";
 import { MapTiles } from "../../../components/MapTiles";
 import { Play } from "lucide-react";
 import { Art } from "./Art";
+import { healCapture } from "../../../lib/capture";
 
 type Props = { item: CaptureItem };
 
@@ -192,19 +193,36 @@ function SocialCover({ item }: Props) {
   return (
     <div className="cv-social" data-format={s?.format ?? "post"}>
       <div className="cv-social-head">
-        {s?.avatar ? <img className="cv-social-avatar" src={s.avatar} alt="" referrerPolicy="no-referrer" /> : <span className="cv-social-avatar cv-social-letter">{who.charAt(0)}</span>}
+        <SocialAvatar src={s?.avatar} letter={who.charAt(0)} onFail={() => healCapture(item.id)} />
         <span className="cv-social-who">{who}</span>
         <span className="cv-social-net mono">{SOCIAL_LABELS[s?.network ?? "x"]}</span>
       </div>
       <p className="cv-social-text">{text}</p>
       {item.image && (
         <div className="cv-social-media">
-          <Art src={item.image} />
+          <Art src={item.image} onFail={() => healCapture(item.id)} />
           {hasVideo && <Play size={18} className="cv-social-play" />}
         </div>
       )}
       <span className="cv-social-tag mono">{SOCIAL_FORMAT_LABELS[s?.format ?? "post"]}</span>
     </div>
+  );
+}
+
+function SocialAvatar({ src, letter, onFail }: { src?: string; letter: string; onFail: () => void }) {
+  const [failed, setFailed] = useState<string>();
+  if (!src || failed === src) return <span className="cv-social-avatar cv-social-letter">{letter}</span>;
+  return (
+    <img
+      className="cv-social-avatar"
+      src={src}
+      alt=""
+      referrerPolicy="no-referrer"
+      onError={() => {
+        setFailed(src);
+        onFail();
+      }}
+    />
   );
 }
 

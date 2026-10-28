@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 /** Imagem remota com fallback tingido pela matiz do item. */
-export function Art({ src, className = "", alt = "" }: { src?: string; className?: string; alt?: string }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) return <div className={`art art-fallback ${className}`} />;
+export function Art({ src, className = "", alt = "", onFail }: { src?: string; className?: string; alt?: string; onFail?: () => void }) {
+  const [failed, setFailed] = useState<string>();
+  if (!src || failed === src) return <div className={`art art-fallback ${className}`} />;
   return (
     <img
       className={`art ${className}`}
@@ -12,7 +12,10 @@ export function Art({ src, className = "", alt = "" }: { src?: string; className
       loading="lazy"
       referrerPolicy="no-referrer"
       draggable={false}
-      onError={() => setFailed(true)}
+      onError={() => {
+        setFailed(src);
+        onFail?.();
+      }}
     />
   );
 }
