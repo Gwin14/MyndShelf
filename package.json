@@ -11,6 +11,10 @@
     "mobile": "corepack pnpm --filter @myndshelf/mobile start",
     "mobile:ios": "corepack pnpm --filter @myndshelf/mobile ios",
     "mobile:android": "corepack pnpm --filter @myndshelf/mobile android",
+    "extension": "corepack pnpm --filter @myndshelf/extension dev",
+    "extension:firefox": "corepack pnpm --filter @myndshelf/extension dev:firefox",
+    "extension:build": "corepack pnpm --filter @myndshelf/extension build && corepack pnpm --filter @myndshelf/extension build:firefox",
+    "extension:zip": "corepack pnpm --filter @myndshelf/extension zip && corepack pnpm --filter @myndshelf/extension zip:firefox",
     "server": "corepack pnpm --filter @myndshelf/server dev",
     "server:test": "corepack pnpm --filter @myndshelf/server test"
   },

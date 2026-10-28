@@ -24,6 +24,7 @@ apps/
     src-tauri/      Rust: comando fetch_html (OpenGraph sem CORS), janela, opener
   web/              Next.js (futuro) — por ora o site é o build do desktop servido pelo servidor
   mobile/           Expo 58 + expo-router (React Native)  ← em desenvolvimento
+  extension/        WXT + React: extensão de navegador (Chrome, Edge, Firefox, Safari) que guarda direto no servidor
   server/           self-hosted: Hono + SQLite (node:sqlite, FTS5), arquivos em disco, Docker + Tailscale
 packages/
   types/            modelos de dados compartilhados
@@ -49,6 +50,8 @@ corepack pnpm mobile         # app mobile no Expo Go (Node 22.13+)
 ```
 
 **Sincronização (self-hosted)**: Ajustes → Servidor liga o app a um servidor seu, acessado pelo Tailscale. O app continua lendo e escrevendo só no banco local, então funciona igual sem conexão; cada mudança entra numa fila que sobe quando o servidor responde, e depois o app busca o que mudou nos outros aparelhos. Os originais da Estante descem ao abrir (ou todos, com *Manter arquivos offline*). Instalação no homelab: [`apps/server/README.md`](apps/server/README.md).
+
+**Extensão de navegador** (`apps/extension`, WXT): guarda a página, um link, uma imagem ou um trecho selecionado na Captura, como o compartilhar do celular — sem o app aberto. Fala direto com o servidor self-hosted (mesmo endereço e token dos apps) e, sem conexão, guarda numa fila que sobe quando ele volta. Detalhes em [`apps/extension/README.md`](apps/extension/README.md).
 
 Backup: Ajustes → Acervo exporta/importa o acervo em JSON, no desktop e no celular (mesmo formato, `packages/core/src/backup.ts`).
 
