@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Code2, Download, ExternalLink, Eye, Globe, Minus, Moon, Plus, RotateCw, ScanText, ShieldCheck, Sun, X } from "lucide-react";
 import type { Creation } from "@myndshelf/types";
+import { readingMinutes, type Table } from "@myndshelf/core";
 import { docLabel, docKindOf, loadDocContent, openPdf, pdfCover, type DocContent, type DocKind } from "../../lib/documents";
 import { openExternal } from "../../lib/platform";
 import { buildSandboxDoc, OPEN_LINK_MESSAGE, SANDBOX_FLAGS, type SandboxDoc } from "../../lib/sandbox";
@@ -430,7 +431,8 @@ function DocReader({ item, kind, blob }: { item: Creation; kind: Exclude<DocKind
 
   // se o documento abre com um <h1>, ele vira o título da página (sem repetir)
   const lead = content?.type === "html" ? content.html.trimStart().match(/^<h1[^>]*>([\s\S]*?)<\/h1>/) : null;
-  const heading = lead ? lead[1].replace(/<[^>]+>/g, "").trim() : undefined;
+  // mantém itálico/negrito do título, mas só ele (sem links nem imagens)
+  const heading = lead ? lead[1].replace(/<(?!\/?(em|strong|i|b|u)>)[^>]+>/g, "").trim() : undefined;
   const bodyHtml = content?.type === "html" ? (lead ? content.html.trimStart().slice(lead[0].length) : content.html) : "";
 
   const onClick = (e: React.MouseEvent) => {
@@ -463,13 +465,16 @@ function DocReader({ item, kind, blob }: { item: Creation; kind: Exclude<DocKind
           setProgress(el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight));
         }}
       >
-        <article className={`reader-page ${content?.type === "table" || content?.type === "code" ? "reader-wide" : ""}`}>
+        <article className={`reader-page ${content?.type === "table" || content?.type === "code" ? "reader-wide" : ""}`} data-kind={kind}>
           <p className="kicker">
             {docLabel(kind, item.fileName)}
             {item.year ? ` · ${item.year}` : ""}
-            {content?.type === "html" ? ` · ${Math.max(1, Math.round(content.words / 220))} min de leitura` : ""}
+            {content?.type === "html" ? ` · ${readingMinutes(content.words)} min de leitura` : ""}
+            {content?.type === "table" ? ` · ${content.table.rows.length - 1 + content.table.hidden} linhas · ${content.table.rows[0]?.length ?? 0} colunas` : ""}
+            {content?.type === "code" ? ` · ${content.text.split("\n").length - 1 || 1} linhas` : ""}
+            {content?.type === "subtitles" ? ` · ${content.cues.length} falas · ${content.cues.at(-1)?.end}` : ""}
           </p>
-          <h1 className="reader-title">{heading || item.title}</h1>
+          {heading ? <h1 className="reader-title" dangerouslySetInnerHTML={{ __html: heading }} /> : <h1 className="reader-title">{item.title}</h1>}
           <hr className="reader-rule" />
 
           {content === undefined && (
@@ -483,39 +488,67 @@ function DocReader({ item, kind, blob }: { item: Creation; kind: Exclude<DocKind
               <p>Não deu para ler este arquivo.</p>
             </div>
           )}
+          {content?.type === "empty" && (
+            <div className="reader-error">
+              <p>Este arquivo está vazio.</p>
+            </div>
+          )}
           {content?.type === "html" && (
             <div className="reader-body" onClick={onClick} dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           )}
           {content?.type === "code" && (
-            <pre className="doc-code">
-              <code>{content.text}</code>
+            <pre className="doc-code doc-code-lines">
+              <code className="hljs" dangerouslySetInnerHTML={{ __html: content.html }} />
             </pre>
           )}
-          {content?.type === "table" && (
-            <div className="doc-table-wrap">
-              <table className="doc-table">
-                <thead>
-                  <tr>
-                    {content.rows[0]?.map((h, i) => (
-                      <th key={i}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {content.rows.slice(1).map((r, i) => (
-                    <tr key={i}>
-                      {r.map((c, j) => (
-                        <td key={j}>{c}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {content?.type === "subtitles" && (
+            <ol className="doc-cues">
+              {content.cues.map((c, i) => (
+                <li key={i}>
+                  <span className="mono doc-cue-time">{c.start}</span>
+                  <p>{c.text}</p>
+                </li>
+              ))}
+            </ol>
           )}
+          {content?.type === "table" && <DocTable table={content.table} />}
           {content && <p className="reader-end">✦</p>}
         </article>
       </div>
     </div>
+  );
+}
+
+function DocTable({ table }: { table: Table }) {
+  const [head, ...rows] = table.rows;
+  const align = (j: number) => (table.numeric[j] ? "num" : undefined);
+  return (
+    <>
+      <div className="doc-table-wrap">
+        <table className="doc-table">
+          <thead>
+            <tr>
+              {head?.map((h, j) => (
+                <th key={j} className={align(j)}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                {head?.map((_, j) => (
+                  <td key={j} className={align(j)}>
+                    {r[j]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {table.hidden > 0 && <p className="mono doc-table-more">+ {table.hidden.toLocaleString("pt-BR")} linhas não mostradas — exporte para ver a tabela inteira</p>}
+    </>
   );
 }

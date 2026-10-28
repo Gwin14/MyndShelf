@@ -58,7 +58,7 @@ export function mediumFromFile(name: string, mime = ""): CreationMedium {
   if (mime.startsWith("video/") || /^(mp4|mov|webm|mkv|avi|m4v)$/.test(ext)) return "video";
   if (isCodeFile(name)) return "code";
   if (/^(pdf|epub|docx?|pages|key|pptx?)$/.test(ext)) return "document";
-  if (mime.startsWith("text/") || /^(txt|md|rtf|json|html?)$/.test(ext)) return "text";
+  if (mime.startsWith("text/") || /^(txt|md|markdown|rtf|json|html?|csv|tsv|srt|vtt|log)$/.test(ext)) return "text";
   return "object";
 }
 

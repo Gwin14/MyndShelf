@@ -901,3 +901,145 @@
   white-space: nowrap;
   color: var(--c-paper-dim);
 }
+
+/* ── texto puro: recuos e quebras do arquivo ficam como estão ── */
+.reader-body p.plain {
+  white-space: pre-wrap;
+}
+/* em documentos, a capitular só entra quando o texto abre com um parágrafo */
+.reader-page[data-kind="text"] .reader-body > p:first-of-type::first-letter,
+.reader-page[data-kind] .reader-body > p:first-of-type:not(:first-child)::first-letter {
+  float: none;
+  margin: 0;
+  font: inherit;
+  background: none;
+  color: inherit;
+}
+
+/* ── listas de tarefas do Markdown ── */
+.reader-body li.task {
+  list-style: none;
+  margin-left: -1.3em;
+}
+.reader-body .task-box {
+  display: inline-grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.35em;
+  vertical-align: -0.1em;
+  border: 1.5px solid var(--r-dim);
+  border-radius: 4px;
+  font-size: 0.85em;
+  line-height: 1;
+}
+.reader-body li.task[data-done="true"] {
+  color: var(--r-dim);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--r-dim) 50%, transparent);
+}
+.reader-body li.task[data-done="true"] .task-box {
+  border-color: var(--r-accent);
+  background: var(--r-accent);
+  color: var(--c-void, #0c0a15);
+}
+.reader-body u {
+  text-decoration-color: color-mix(in srgb, var(--r-accent) 70%, transparent);
+  text-underline-offset: 3px;
+}
+
+/* ── código: números de linha e cores ── */
+.doc-code-lines code {
+  counter-reset: line;
+}
+.doc-code-lines .line {
+  counter-increment: line;
+}
+.doc-code-lines .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: 3ch;
+  margin-right: 2ch;
+  text-align: right;
+  color: rgba(255, 210, 140, 0.28);
+  user-select: none;
+}
+.hljs-comment,
+.hljs-quote {
+  color: rgba(239, 230, 210, 0.42);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-meta .hljs-keyword {
+  color: #ff8a5c;
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-attr .hljs-string {
+  color: #b9e07a;
+}
+.hljs-number,
+.hljs-literal,
+.hljs-symbol {
+  color: #6fd6ff;
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section {
+  color: #ffd27a;
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable {
+  color: #f0b4ff;
+}
+.hljs-type,
+.hljs-title.class_,
+.hljs-tag,
+.hljs-name {
+  color: #7fe0c4;
+}
+.hljs-meta {
+  color: #c9a46a;
+}
+
+/* ── tabelas: números à direita ── */
+.doc-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.doc-table-more {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: var(--r-dim);
+}
+
+/* ── legendas: uma fala por linha, com o tempo ao lado ── */
+.doc-cues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: "Newsreader Variable", Georgia, serif;
+  font-size: var(--reader-size, 19px);
+  line-height: 1.5;
+}
+.doc-cues li {
+  display: grid;
+  grid-template-columns: 7ch 1fr;
+  gap: 18px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--r-line);
+}
+.doc-cues p {
+  margin: 0;
+  white-space: pre-line;
+}
+.doc-cue-time {
+  padding-top: 0.35em;
+  font-size: 11px;
+  color: var(--r-accent);
+}

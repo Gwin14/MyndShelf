@@ -13,7 +13,7 @@ import { RunOutput } from "../../components/RunOutput";
 import { Touch } from "../../components/Touch";
 import { ShelfObject } from "../../features/shelf/ShelfObject";
 import { analyzeCreation, canReadCreation, useAiRun } from "../../lib/ai";
-import { docKindOf, shareCreation } from "../../lib/files";
+import { canOpenCreation, creationFile, shareCreation } from "../../lib/files";
 import { creationMenu } from "../../lib/menus";
 import { openSheet } from "../../lib/sheet";
 import { library, useLibrary } from "../../lib/store";
@@ -29,7 +29,8 @@ export default function CreationDetail() {
   if (!item) return <ModalScreen kicker="Estante">{null}</ModalScreen>;
 
   const update = (patch: Partial<Creation>) => library.getState().updateCreation(item.id, patch);
-  const canOpen = !!item.filePath && (!!docKindOf(item) || /^(image|audio|video)$/.test(item.medium));
+  const canOpen = canOpenCreation(item);
+  const here = !!creationFile(item);
   const busy = analysis.state.status === "thinking" || analysis.state.status === "streaming";
 
   return (
@@ -59,7 +60,7 @@ export default function CreationDetail() {
         {canReadCreation(item) && (
           <Button small disabled={busy} label={busy ? "Lendo…" : item.analysis ? "Analisar de novo" : "Analisar"} icon={<ScanText {...ICON} />} onPress={() => void analysis.run((onText, signal) => analyzeCreation(item, onText, signal))} />
         )}
-        {item.filePath && <Button small icon={<Share2 {...ICON} />} onPress={() => void shareCreation(item)} />}
+        {here && <Button small icon={<Share2 {...ICON} />} onPress={() => void shareCreation(item)} />}
       </View>
 
       {(analysis.state.status !== "idle" || item.analysis) && (

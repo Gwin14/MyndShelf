@@ -2,7 +2,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
-import { isCodeFile, mediumFromFile, titleFromFileName } from "@myndshelf/core";
+import { docKindOf, isCodeFile, mediumFromFile, titleFromFileName } from "@myndshelf/core";
 import type { Creation } from "@myndshelf/types";
 import { downscaleToDataUrl } from "./images";
 import { library } from "./store";
@@ -27,10 +27,25 @@ async function keepFile(id: string, uri: string, name: string): Promise<File> {
   return dest;
 }
 
-export function creationFile(c: Creation): File | undefined {
-  if (!c.filePath) return;
-  const f = new File(c.filePath);
-  return f.exists ? f : undefined;
+/**
+ * Arquivo da criação neste aparelho. O caminho guardado é absoluto, e o iOS troca a pasta do app
+ * a cada reinstalação (o UUID muda); então, se ele sumiu, procuramos em creations/<id>/.
+ */
+export function creationFile(c: Pick<Creation, "id" | "filePath" | "fileName" | "title">): File | undefined {
+  if (c.filePath) {
+    const f = new File(c.filePath);
+    if (f.exists) return f;
+  }
+  const dir = new Directory(root(), c.id);
+  if (!dir.exists) return;
+  const named = new File(dir, safeName(c.fileName ?? c.title));
+  if (named.exists) return named;
+  return dir.list().find((e): e is File => e instanceof File && !e.name.startsWith("."));
+}
+
+/** O app sabe mostrar por dentro (o arquivo pode ainda estar no servidor). */
+export function canOpenCreation(c: Pick<Creation, "fileName" | "mime" | "medium">): boolean {
+  return !!docKindOf(c) || /^(image|audio|video)$/.test(c.medium);
 }
 
 export function removeCreationFiles(id: string) {
@@ -38,17 +53,7 @@ export function removeCreationFiles(id: string) {
   if (dir.exists) dir.delete();
 }
 
-export type DocKind = "pdf" | "markdown" | "text" | "code" | "html";
-
-/** Documentos que o app sabe abrir por dentro. */
-export function docKindOf(c: Pick<Creation, "fileName" | "mime" | "medium">): DocKind | undefined {
-  const name = c.fileName?.toLowerCase() ?? "";
-  if (name.endsWith(".pdf") || c.mime === "application/pdf") return "pdf";
-  if (/\.(md|markdown)$/.test(name)) return "markdown";
-  if (/\.html?$/.test(name)) return "html";
-  if (isCodeFile(name)) return "code";
-  if (/\.(txt|csv|tsv|log|rtf)$/.test(name) || c.mime?.startsWith("text/")) return "text";
-}
+export { docKindOf, type DocKind } from "@myndshelf/core";
 
 export async function addCreationFromAsset(asset: { uri: string; name: string; mimeType?: string | null; size?: number | null; width?: number; height?: number }, shelfId: string | null = null) {
   const medium = mediumFromFile(asset.name, asset.mimeType ?? "");

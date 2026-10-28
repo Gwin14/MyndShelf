@@ -15,3 +15,4 @@ export * from "./social";
 export * from "./ai";
 export * from "./layout";
 export * from "./backup";
+export * from "./documents";

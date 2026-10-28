@@ -118,7 +118,9 @@ const htmlToText = (html: string) => new DOMParser().parseFromString(html, "text
 function docText(content: DocContent): string {
   if (content.type === "html") return htmlToText(content.html);
   if (content.type === "code") return content.text;
-  return content.rows.map((r) => r.join(" | ")).join("\n");
+  if (content.type === "table") return content.table.rows.map((r) => r.join(" | ")).join("\n");
+  if (content.type === "subtitles") return content.cues.map((c) => c.text).join("\n");
+  return "";
 }
 
 /** Texto de que a captura trata: o artigo inteiro ou a nota. */

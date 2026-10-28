@@ -1,38 +1,22 @@
 import DOMPurify from "dompurify";
-import type { Creation } from "@myndshelf/types";
-import { codeLanguageOf, isCodeFile } from "@myndshelf/core";
+import {
+  codeLines,
+  countWords,
+  csvSeparator,
+  DOCX_STYLE_MAP,
+  isBlankText,
+  markdownTasks,
+  parseCsv,
+  parseSubtitles,
+  prettyCode,
+  textToHtml,
+  type Cue,
+  type DocKind,
+  type Table,
+} from "@myndshelf/core";
+import { highlightBlocks, highlightCode } from "@myndshelf/core/highlight";
 
-/** Formatos que o app sabe abrir por dentro. */
-export type DocKind = "pdf" | "docx" | "markdown" | "text" | "code" | "csv" | "html";
-
-
-export function docKindOf(c: Pick<Creation, "fileName" | "mime">): DocKind | undefined {
-  const ext = c.fileName?.split(".").pop()?.toLowerCase() ?? "";
-  const mime = c.mime ?? "";
-  if (ext === "pdf" || mime === "application/pdf") return "pdf";
-  if (ext === "docx") return "docx";
-  if (/^(md|markdown|mdx)$/.test(ext)) return "markdown";
-  if (/^(csv|tsv)$/.test(ext)) return "csv";
-  if (/^(html?|xhtml)$/.test(ext)) return "html";
-  if (isCodeFile(c.fileName)) return "code";
-  if (/^(txt|text|log|nfo|srt|vtt)$/.test(ext) || mime.startsWith("text/")) return "text";
-  return undefined;
-}
-
-/** Nome para mostrar: a linguagem, no caso de código ("Abrir Python"). */
-export function docLabel(kind: DocKind, fileName?: string): string {
-  return kind === "code" ? codeLanguageOf(fileName).name : DOC_LABELS[kind];
-}
-
-export const DOC_LABELS: Record<DocKind, string> = {
-  pdf: "PDF",
-  docx: "Word",
-  markdown: "Markdown",
-  text: "Texto",
-  code: "Código",
-  csv: "Tabela",
-  html: "HTML",
-};
+export { docKindOf, docLabel, DOC_LABELS, type DocKind } from "@myndshelf/core";
 
 /* ───────────────────────── PDF (pdf.js) ───────────────────────── */
 
@@ -91,74 +75,43 @@ export async function pdfText(blob: Blob, maxPages = 40): Promise<string> {
 
 export type DocContent =
   | { type: "html"; html: string; words: number }
-  | { type: "code"; text: string; lang: string }
-  | { type: "table"; rows: string[][] };
+  | { type: "code"; text: string; html: string; lang: string }
+  | { type: "table"; table: Table }
+  | { type: "subtitles"; cues: Cue[] }
+  | { type: "empty" };
 
 const sanitize = (html: string) =>
   DOMPurify.sanitize(html, { FORBID_TAGS: ["style", "script", "iframe", "form", "input", "button"], FORBID_ATTR: ["style"] });
 
-const countWords = (html: string) => html.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
-
-function parseCsv(text: string, sep: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (quoted) {
-      if (ch === '"' && text[i + 1] === '"') {
-        cell += '"';
-        i++;
-      } else if (ch === '"') quoted = false;
-      else cell += ch;
-    } else if (ch === '"') quoted = true;
-    else if (ch === sep) {
-      row.push(cell);
-      cell = "";
-    } else if (ch === "\n" || ch === "\r") {
-      if (ch === "\r" && text[i + 1] === "\n") i++;
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-    } else cell += ch;
-  }
-  if (cell || row.length) rows.push([...row, cell]);
-  return rows.slice(0, 2000);
-}
+const asHtml = (raw: string): DocContent => {
+  const html = sanitize(raw);
+  return { type: "html", html, words: countWords(html) };
+};
 
 /** Converte o arquivo em algo que o leitor sabe mostrar. */
 export async function loadDocContent(kind: Exclude<DocKind, "pdf">, blob: Blob, fileName = ""): Promise<DocContent> {
+  if (blob.size === 0) return { type: "empty" };
   if (kind === "docx") {
     const mammoth = await import("mammoth");
-    const { value } = await mammoth.convertToHtml({ arrayBuffer: await blob.arrayBuffer() });
-    const html = sanitize(value);
-    return { type: "html", html, words: countWords(html) };
+    const { value } = await mammoth.convertToHtml({ arrayBuffer: await blob.arrayBuffer() }, { styleMap: DOCX_STYLE_MAP });
+    return isBlankText(value.replace(/<[^>]+>/g, "")) ? { type: "empty" } : asHtml(value);
   }
 
   const text = await blob.text();
+  if (isBlankText(text)) return { type: "empty" };
   if (kind === "markdown") {
     const { marked } = await import("marked");
-    const html = sanitize(await marked.parse(text, { gfm: true }));
-    return { type: "html", html, words: countWords(html) };
+    return asHtml(await highlightBlocks(markdownTasks(await marked.parse(text.replace(/^\uFEFF/, ""), { gfm: true }))));
   }
-  if (kind === "html") {
-    const body = new DOMParser().parseFromString(text, "text/html").body.innerHTML;
-    const html = sanitize(body);
-    return { type: "html", html, words: countWords(html) };
+  if (kind === "html") return asHtml(new DOMParser().parseFromString(text, "text/html").body.innerHTML);
+  if (kind === "csv") return { type: "table", table: parseCsv(text, csvSeparator(text, fileName)) };
+  if (kind === "subtitles") {
+    const cues = parseSubtitles(text);
+    if (cues.length) return { type: "subtitles", cues };
   }
-  if (kind === "csv") {
-    const sep = fileName.toLowerCase().endsWith(".tsv") ? "\t" : (text.split("\n")[0].match(/;/g)?.length ?? 0) > (text.split("\n")[0].match(/,/g)?.length ?? 0) ? ";" : ",";
-    return { type: "table", rows: parseCsv(text, sep) };
+  if (kind === "code") {
+    const pretty = prettyCode(text, fileName);
+    return { type: "code", text: pretty, html: codeLines(await highlightCode(pretty, fileName)), lang: fileName.split(".").pop() ?? "" };
   }
-  if (kind === "code") return { type: "code", text, lang: fileName.split(".").pop() ?? "" };
-
-  // texto puro: parágrafos separados por linha em branco
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const html = text
-    .split(/\n{2,}/)
-    .map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`)
-    .join("");
-  return { type: "html", html, words: countWords(html) };
+  return asHtml(textToHtml(text));
 }

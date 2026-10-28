@@ -31,7 +31,7 @@ import type { CaptureItem, CaptureKind, Creation, CreationMedium, Feed, FeedEntr
 import { placeNode } from "./board";
 import { refreshCapture, saveEntry } from "./capture";
 import { refreshFeed, subscribe } from "./feeds";
-import { docKindOf, removeCreationFiles, shareCreation } from "./files";
+import { canOpenCreation, creationFile, removeCreationFiles, shareCreation } from "./files";
 import { openExternal, openInApp } from "./platform";
 import type { MaybeEntry, SheetEntry } from "./sheet";
 import { library } from "./store";
@@ -240,12 +240,11 @@ export function removeCreation(c: Creation) {
 }
 
 export function creationMenu(c: Creation, opts: { inDetail?: boolean } = {}): MaybeEntry[] {
-  const doc = docKindOf(c);
   const shelves = lib().shelves;
-  const canOpen = !!doc || /^(image|audio|video)$/.test(c.medium);
+  const canOpen = canOpenCreation(c);
   return [
     !opts.inDetail && { label: "Abrir detalhes", icon: <PanelBottom size={S} color={C} />, onSelect: () => router.push(`/creation/${c.id}`) },
-    canOpen && c.filePath && { label: "Abrir", icon: <BookOpen size={S} color={C} />, onSelect: () => router.push(`/creation/read/${c.id}`) },
+    canOpen && { label: "Abrir", icon: <BookOpen size={S} color={C} />, onSelect: () => router.push(`/creation/read/${c.id}`) },
     {
       label: c.featured ? "Tirar da vitrine" : "Pôr na vitrine",
       icon: <Star size={S} color={c.featured ? colors.amber : C} fill={c.featured ? colors.amber : "none"} />,
@@ -270,7 +269,7 @@ export function creationMenu(c: Creation, opts: { inDetail?: boolean } = {}): Ma
       })),
     },
     projectsSubmenu("creation", c.id),
-    c.filePath && { label: "Compartilhar arquivo", icon: <Share2 size={S} color={C} />, onSelect: () => void shareCreation(c) },
+    creationFile(c) && { label: "Compartilhar arquivo", icon: <Share2 size={S} color={C} />, onSelect: () => void shareCreation(c) },
     {
       label: "Remover",
       icon: <Trash2 size={S} color={colors.ember} />,

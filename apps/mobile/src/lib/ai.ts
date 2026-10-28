@@ -18,6 +18,7 @@ import {
   type LibraryRef,
 } from "@myndshelf/core";
 import type { CaptureItem, Creation } from "@myndshelf/types";
+import { docxText } from "./documents";
 import { docKindOf } from "./files";
 import { ensureCreationFile } from "./sync";
 import { loadArticle } from "./reader";
@@ -136,7 +137,8 @@ async function creationParts(c: Creation): Promise<AiPart[]> {
     return parts;
   }
   if (kind && kind !== "pdf") {
-    parts.push({ text: `Conteúdo do arquivo:\n${(await file.text()).slice(0, TEXT_LIMIT)}` });
+    const text = kind === "docx" ? await docxText(file) : await file.text();
+    parts.push({ text: `Conteúdo do arquivo:\n${text.slice(0, TEXT_LIMIT)}` });
   } else if (file.size <= INLINE_LIMIT && (kind === "pdf" || /^(image|audio)$/.test(c.medium))) {
     const mimeType = kind === "pdf" ? "application/pdf" : c.mime || (c.medium === "image" ? "image/jpeg" : "audio/mpeg");
     parts.push({ inlineData: { mimeType, data: await file.base64() } });
