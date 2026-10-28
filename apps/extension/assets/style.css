@@ -47,7 +47,14 @@ textarea {
   border-radius: var(--r-md);
   padding: 10px 12px;
   outline: none;
-  transition: border-color var(--t-fast) var(--ease);
+  transition:
+    border-color var(--t-fast) var(--ease),
+    opacity var(--t-base) var(--ease);
+}
+
+input:disabled,
+textarea:disabled {
+  opacity: 0.6;
 }
 
 input:focus,
@@ -94,7 +101,10 @@ kbd {
   background: var(--c-paper);
   color: var(--c-void);
   font-weight: 600;
-  transition: transform var(--t-fast) var(--spring), background var(--t-base) var(--ease);
+  transition:
+    transform var(--t-fast) var(--spring),
+    background var(--t-base) var(--ease),
+    opacity var(--t-base) var(--ease);
 }
 
 .primary:not(:disabled):hover {
@@ -113,10 +123,14 @@ kbd {
   text-decoration: underline;
   text-decoration-color: var(--c-line-strong);
   text-underline-offset: 3px;
+  transition:
+    color var(--t-fast) var(--ease),
+    text-decoration-color var(--t-fast) var(--ease);
 }
 
 .ghost:hover {
   color: var(--c-paper);
+  text-decoration-color: var(--c-paper-dim);
 }
 
 .hint {
@@ -199,6 +213,328 @@ kbd {
   font-size: 12px;
   color: var(--c-paper-mute);
   text-align: center;
+}
+
+/* ─────────── movimento do popup ─────────── */
+
+/* `backwards` e não `both`: depois de entrar, o hover e o clique voltam a mandar no transform */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes nudge {
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* entrada: as partes sobem uma depois da outra */
+.popup-main > * {
+  animation: rise var(--t-base) var(--ease) backwards;
+}
+.popup-main > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.popup-main > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.popup-main > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.popup-main > :nth-child(5) {
+  animation-delay: 160ms;
+}
+
+/* saída: o conteúdo some antes de o popup fechar (fundo fica, a janela não pode ser transparente) */
+.popup #root {
+  transition:
+    opacity var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.popup.leaving #root {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.985);
+}
+
+/* textos que trocam (botão, rodapé) entram de novo a cada troca */
+.swap {
+  display: inline-block;
+  animation: rise var(--t-fast) var(--ease) backwards;
+}
+
+.status .error {
+  animation:
+    rise var(--t-fast) var(--ease) backwards,
+    nudge 320ms var(--ease) 80ms;
+}
+
+/* lendo a página: um brilho atravessa o botão */
+.primary.is-saving {
+  opacity: 1;
+  background: linear-gradient(100deg, var(--c-paper) 35%, #fff 50%, var(--c-paper) 65%) 0 0 / 200% 100%;
+  animation: sweep 1.2s linear infinite;
+}
+
+.primary.is-done {
+  opacity: 1;
+  animation: pop var(--t-base) var(--spring);
+}
+
+/* esqueleto da prévia enquanto a aba carrega */
+.skeleton {
+  display: block;
+  height: 12px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, rgba(239, 230, 210, 0.05) 30%, rgba(239, 230, 210, 0.13) 50%, rgba(239, 230, 210, 0.05) 70%)
+    0 0 / 200% 100%;
+  animation: sweep 1.4s ease-in-out infinite;
+}
+
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.skeleton.short {
+  width: 40%;
+  height: 9px;
+}
+
+.favicon.skeleton {
+  height: 20px;
+}
+
+/* ─────────── guardado: a celebração toma o popup ─────────── */
+
+.popup-main.is-leaving {
+  opacity: 0;
+  transform: scale(0.97);
+  filter: blur(4px);
+  transition:
+    opacity var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease),
+    filter var(--t-fast) var(--ease);
+}
+
+.saved {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+/* tudo do palco no mesmo ponto: o centro da estrela */
+.saved-stage {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+}
+
+.saved-stage > * {
+  grid-area: 1 / 1;
+}
+
+.saved-bloom {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 241, 184, 0.5), rgba(111, 214, 255, 0.16) 42%, transparent 70%);
+  animation: saved-bloom 1.4s var(--ease) both;
+}
+
+.saved-ring {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-sun);
+  animation: saved-ring 900ms var(--ease) 80ms both;
+}
+
+.saved-ring.late {
+  border-color: var(--c-cyan);
+  animation-delay: 260ms;
+}
+
+.saved-spark {
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: var(--color);
+  box-shadow: 0 0 8px var(--color);
+  animation: saved-spark 1.1s cubic-bezier(0.15, 0.8, 0.3, 1) var(--delay) both;
+}
+
+.saved-spark.is-star {
+  width: calc(var(--size) * 2.4);
+  height: calc(var(--size) * 2.4);
+  border-radius: 0;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+}
+
+.saved-star {
+  font-size: 72px;
+  line-height: 1;
+  background: var(--g-flare) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    saved-star 900ms var(--ease) both,
+    saved-glow 2.4s ease-in-out 900ms infinite,
+    sweep 3s linear 900ms infinite;
+}
+
+.saved.is-queued .saved-star {
+  background-image: linear-gradient(100deg, var(--c-amber), var(--c-sun), var(--c-amber));
+}
+
+.saved-title {
+  margin: 6px 0 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.1;
+  animation: saved-reveal 700ms var(--ease) 320ms both;
+}
+
+.saved-title i {
+  background: var(--g-flare);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-style: normal;
+}
+
+.saved-sub {
+  margin: 0;
+  max-width: 280px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--c-paper-mute);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  animation: saved-reveal 700ms var(--ease) 460ms both;
+}
+
+@keyframes saved-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.4;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes saved-ring {
+  from {
+    opacity: 1;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+
+@keyframes saved-spark {
+  from {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3);
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+    transform: translate(calc(var(--x) * 0.85), calc(var(--y) * 0.85)) scale(1) rotate(90deg);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(0) rotate(180deg);
+  }
+}
+
+@keyframes saved-star {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(-200deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.22) rotate(14deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes saved-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(255, 180, 61, 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 22px rgba(111, 214, 255, 0.6));
+  }
+}
+
+@keyframes saved-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(8px);
+    letter-spacing: 0.12em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 /* ─────────── ajustes ─────────── */
