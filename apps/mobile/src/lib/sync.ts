@@ -8,6 +8,7 @@ import { configureAi } from "@myndshelf/core";
 import { createSync, type FileAdapter, type SyncStatus } from "@myndshelf/sync";
 import type { Creation } from "@myndshelf/types";
 import type { StateStorage } from "zustand/middleware";
+import { Drive } from "../../modules/myndshelf-drive";
 import { creationFile, root, safeName } from "./files";
 import { isSample } from "./seed";
 import { library, ready, storage } from "./store";
@@ -52,8 +53,9 @@ export function useSync<T>(selector: (s: SyncStatus) => T): T {
 /** Arquivo da criação, baixando do servidor quando não está no aparelho. */
 export async function ensureCreationFile(c: Creation): Promise<File | undefined> {
   const here = creationFile(c);
-  if (here) return here;
-  if (!(await sync.ensureFile(c))) return;
+  // com fileRev, o drive pode ter trocado o conteúdo: deixa o sync conferir
+  if (here && !c.fileRev) return here;
+  if (!(await sync.ensureFile(c))) return here;
   const fresh = library.getState().creations.find((x) => x.id === c.id);
   return fresh && creationFile(fresh);
 }
@@ -76,13 +78,39 @@ export function useCreationFile(c: Creation | undefined): { file: File | undefin
   return { file, loading: missing && loading };
 }
 
+/**
+ * Drive (app Arquivos no iOS, gerenciador de arquivos no Android): segue o servidor
+ * conectado. Ligou, trocou de token ou desconectou → a extensão fica sabendo.
+ */
+function followDrive(): () => void {
+  const drive = Drive;
+  if (!drive) return () => {};
+  let last: string | undefined;
+  const apply = () => {
+    const c = sync.config();
+    const key = c ? `${c.url}\n${c.token}` : "";
+    if (key === last) return;
+    last = key;
+    void (c ? drive.enable(c.url, c.token) : drive.disable()).catch(() => {});
+  };
+  apply();
+  return sync.status.subscribe(apply);
+}
+
 export function startSync() {
   configureAi({ proxy: () => sync.aiProxy() });
-  void ready().then(() => sync.start());
+  let stopDrive = () => {};
+  void ready()
+    .then(() => sync.start())
+    .then(() => (stopDrive = followDrive()));
   // voltou ao app (Tailscale pode ter conectado nesse meio-tempo)
-  const sub = AppState.addEventListener("change", (s) => s === "active" && void sync.now());
+  const sub = AppState.addEventListener("change", (s) => {
+    if (s !== "active") return;
+    void sync.now().then(() => Drive?.refresh().catch(() => {}));
+  });
   return () => {
     sub.remove();
+    stopDrive();
     sync.stop();
   };
 }

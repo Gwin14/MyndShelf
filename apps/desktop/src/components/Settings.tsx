@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAi } from "../lib/ai";
 import { APP_ICONS, iconUrl, useAppIcon } from "../lib/appIcon";
 import { exportLibrary, importLibrary } from "../lib/backup";
-import { isTauri, openExternal } from "../lib/platform";
+import { disableDrive, driveStore, enableDrive, fileManagerName, followServer, refreshDrive } from "../lib/drive";
+import { isTauri, openExternal, openPath } from "../lib/platform";
 import { suggestedServer, sync, useSync } from "../lib/sync";
 import { Modal } from "./Modal";
 
@@ -129,6 +130,7 @@ function ServerSettings() {
     try {
       await sync.connect({ url, token });
       setToken("");
+      void followServer();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -152,7 +154,7 @@ function ServerSettings() {
             <button className="btn" disabled={status.phase === "syncing"} onClick={() => void sync.now()}>
               Sincronizar agora
             </button>
-            <button className="btn" onClick={() => void sync.disconnect()}>
+            <button className="btn" onClick={() => void disableDrive().then(() => sync.disconnect())}>
               Desconectar
             </button>
           </div>
@@ -163,6 +165,7 @@ function ServerSettings() {
               Baixa todos os originais da Estante. Desligado, cada arquivo desce quando você abre e fica guardado aqui.
             </span>
           </label>
+          {isTauri && <DriveSettings />}
         </>
       ) : (
         <>
@@ -189,6 +192,37 @@ function ServerSettings() {
           {error && <p className="sync-line sync-error">{error}</p>}
         </>
       )}
+    </>
+  );
+}
+
+/** A Estante como pasta do sistema, igual Google Drive / Proton Drive. */
+function DriveSettings() {
+  const d = driveStore();
+  useEffect(() => {
+    void refreshDrive();
+  }, []);
+  if (!d.supported) return null;
+  return (
+    <>
+      <label className="settings-toggle">
+        <input type="checkbox" checked={d.enabled} disabled={d.busy} onChange={(e) => void (e.target.checked ? enableDrive() : disableDrive())} />
+        <span>
+          <strong>Mostrar a Estante no {fileManagerName}</strong>
+          Cada estante vira uma pasta. Os arquivos baixam quando você abre; o que você soltar, renomear ou apagar ali vale para o acervo.
+          {d.busy && " Ligando…"}
+        </span>
+      </label>
+      {d.enabled && d.running && d.location && (
+        <div className="key-row">
+          <button className="btn" onClick={() => void openPath(d.location!)}>
+            Abrir pasta
+          </button>
+          <span className="settings-sub mono">{d.location}</span>
+        </div>
+      )}
+      {d.enabled && d.running && !d.location && <p className="settings-sub settings-note">Aparece na barra lateral do Finder, em Locais.</p>}
+      {d.error && <p className="sync-line sync-error">{d.error}</p>}
     </>
   );
 }

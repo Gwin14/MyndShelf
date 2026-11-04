@@ -155,6 +155,12 @@ test("a Estante aparece como pastas, e o drive escreve de volta no acervo", asyn
   const head = await fetch(`${url}/api/files/${c1Id}`, { method: "HEAD", headers: auth });
   assert.equal(head.status, 404);
 
+  // arquivo criado vazio e escrito depois (como o Android faz)
+  const vazio = await api<DriveItem>("/files?parent=root", { method: "POST", headers: { "x-file-name": "nova.txt" } });
+  assert.equal(vazio.size, 0);
+  const cheio = await api<DriveItem>(`/files/${vazio.id}`, { method: "PUT", headers: { "content-type": "text/plain" }, body: "oi" });
+  assert.equal(cheio.size, 2);
+
   // estante nova pelo drive; subpasta é recusada
   const pasta = await api<DriveItem>("/folders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "Áudios" }) });
   assert.equal(pasta.kind, "folder");

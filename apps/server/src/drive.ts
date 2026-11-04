@@ -147,7 +147,7 @@ export function mountDrive(app: Hono, { db, saveFile, removeFile }: Deps) {
     for (const id of gone) {
       if (!live.has(id)) items.push({ id, parentId: DRIVE_ROOT, kind: "file", name: "", version: "", deleted: true });
     }
-    return c.json<DriveChangesResponse>({ items, cursor: since, more: false });
+    return c.json<DriveChangesResponse>({ items, cursor: since, more: false, full: touched });
   });
 
   /* ─────────── escrita ─────────── */
@@ -156,8 +156,8 @@ export function mountDrive(app: Hono, { db, saveFile, removeFile }: Deps) {
   app.post(`${base}/files`, async (c) => {
     const parent = c.req.query("parent") || DRIVE_ROOT;
     if (!shelfExists(parent)) return c.json({ error: "pasta não existe" }, 404);
-    const body = c.req.raw.body;
-    if (!body) return c.json({ error: "empty" }, 400);
+    // corpo vazio vale: o Android cria o arquivo antes de escrever nele
+    const body = c.req.raw.body ?? new Blob([]).stream();
     const rawName = c.req.header("x-file-name");
     const fileName = safeName(rawName ? decodeURIComponent(rawName) : "", "Arquivo");
     const mime = c.req.header("content-type")?.split(";")[0] || undefined;
@@ -186,8 +186,7 @@ export function mountDrive(app: Hono, { db, saveFile, removeFile }: Deps) {
     const id = c.req.param("id");
     const rec = db.record<Creation>("creations", id);
     if (!rec) return c.json({ error: "not found" }, 404);
-    const body = c.req.raw.body;
-    if (!body) return c.json({ error: "empty" }, 400);
+    const body = c.req.raw.body ?? new Blob([]).stream();
     const mime = c.req.header("content-type")?.split(";")[0] || rec.data.mime;
     const size = await saveFile(id, body, rec.data.fileName ?? null, mime ?? null);
     const data: Creation = { ...rec.data, size, mime, fileRev: (rec.data.fileRev ?? 0) + 1 };

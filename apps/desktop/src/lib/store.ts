@@ -29,7 +29,11 @@ export const onMissingFile = (fn: typeof missingFile) => (missingFile = fn);
 /** Arquivos originais da Estante ficam fora do estado, em um store de blobs. */
 export const fileStore = {
   put: (id: string, blob: Blob) => set(id, blob, files),
-  get: async (id: string) => (await get<Blob>(id, files)) ?? missingFile?.(id),
+  get: async (id: string) => {
+    // conteúdo trocado pelo drive (fileRev): o sync confere se a cópia daqui é a atual
+    if (missingFile && library.getState().creations.find((c) => c.id === id)?.fileRev) return (await missingFile(id)) ?? get<Blob>(id, files);
+    return (await get<Blob>(id, files)) ?? missingFile?.(id);
+  },
   /** só o que já está neste computador, sem ir ao servidor */
   local: (id: string) => get<Blob>(id, files),
   remove: (id: string) => del(id, files),

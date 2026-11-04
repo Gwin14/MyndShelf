@@ -1,3 +1,5 @@
+mod drive;
+
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -374,9 +376,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(Dropped::default())
         .manage(DropzoneState::default())
+        .manage(drive::DriveState::default())
         .setup(|app| {
             build_tray(app)?;
             dropzone_window(app.handle())?;
+            drive::resume(app.handle());
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -391,7 +395,7 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed, set_app_icon])
+        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed, set_app_icon, drive::drive_status, drive::drive_enable, drive::drive_disable])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o MyndShelf");
 }

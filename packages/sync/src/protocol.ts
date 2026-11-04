@@ -92,9 +92,12 @@ export interface DriveListResponse {
 
 /** GET /api/drive/changes?since=<cursor> */
 export interface DriveChangesResponse {
+  /** com `full`, todos os itens vivos (o que não veio saiu) mais as exclusões */
   items: DriveItem[];
   cursor: number;
   more: boolean;
+  /** algo da Estante mudou e `items` é a árvore inteira */
+  full: boolean;
 }
 
 /** PATCH /api/drive/items/:id */

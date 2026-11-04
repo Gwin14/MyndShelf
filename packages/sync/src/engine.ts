@@ -555,6 +555,9 @@ export function createSync(options: SyncOptions) {
 
     ensureFile,
 
+    /** Endereço e token em uso, para entregar às extensões do sistema (drive). */
+    config: (): SyncConfig | null => (active() ? { url: state.url!, token } : null),
+
     /** Cabeçalho de autenticação, para outras chamadas ao servidor. */
     authHeaders: (): Record<string, string> => (active() ? headers() : {}),
 

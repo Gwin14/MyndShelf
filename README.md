@@ -50,6 +50,22 @@ corepack pnpm mobile         # app mobile no Expo Go (Node 22.13+)
 
 **Sincronização (self-hosted)**: Ajustes → Servidor liga o app a um servidor seu, acessado pelo Tailscale. O app continua lendo e escrevendo só no banco local, então funciona igual sem conexão; cada mudança entra numa fila que sobe quando o servidor responde, e depois o app busca o que mudou nos outros aparelhos. Os originais da Estante descem ao abrir (ou todos, com *Manter arquivos offline*). Instalação no homelab: [`apps/server/README.md`](apps/server/README.md).
 
+**Drive** (precisa do servidor): a Estante aparece no gerenciador de arquivos de cada sistema, como Google Drive e Proton Drive. Cada estante vira uma pasta, e os arquivos baixam quando você abre. O que você solta, edita, renomeia, move ou apaga ali vale para o acervo. Estantes não têm subpastas.
+
+| Sistema | Onde aparece | Como liga | Código |
+|---|---|---|---|
+| macOS | Finder → Locais → MyndShelf | Ajustes → Servidor → *Mostrar a Estante no Finder* | extensão File Provider (`apps/mobile/targets/drive/*.swift`, montada por `apps/desktop/scripts/build-drive-appex.mjs`) + registro em `src-tauri/drive/src/macos.rs` |
+| Windows | Explorer → painel lateral → MyndShelf (`%USERPROFILE%\MyndShelf`) | o mesmo interruptor | Cloud Files API, `src-tauri/drive/src/windows.rs` |
+| Linux | `~/MyndShelf` + atalho no Nautilus/Dolphin/Thunar | o mesmo interruptor (precisa do pacote `fuse3`) | FUSE, `src-tauri/drive/src/linux.rs` |
+| iOS/iPadOS | app Arquivos → Locais → MyndShelf | sozinho, ao conectar ao servidor | target `apps/mobile/targets/drive` + `modules/myndshelf-drive/ios` |
+| Android | app Arquivos / seletor de documentos → MyndShelf | sozinho, ao conectar ao servidor | `modules/myndshelf-drive/android` (DocumentsProvider) |
+
+No Windows e no Linux, o drive roda dentro do app (como o Google Drive): o app precisa estar aberto, nem que seja só na bandeja. No macOS, iOS e Android, quem cuida é o sistema. A API do servidor está em `apps/server/README.md` → *Drive*.
+
+Para gerar o app do macOS com o drive: `MYNDSHELF_APPLE_TEAM_ID=<seu Team ID> APPLE_SIGNING_IDENTITY="Developer ID Application: …" corepack pnpm desktop:build`. Sem Team ID o app funciona, mas o macOS não carrega a extensão (App Group exige assinatura). No iOS, o target precisa do mesmo App Group (`group.com.myndshelf.app`) no seu time: `npx expo prebuild` + `expo run:ios`.
+
+Testar o drive do Linux sem o app: `cd apps/desktop/src-tauri/drive && cargo run --example mount -- <url> <token> <pasta>` monta em `<pasta>/MyndShelf`.
+
 Backup: Ajustes → Acervo exporta/importa o acervo em JSON, no desktop e no celular (mesmo formato, `packages/core/src/backup.ts`).
 
 ## Próximos passos sugeridos
