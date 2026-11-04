@@ -72,6 +72,8 @@ interface Persisted {
   keepFiles: boolean;
   lastSync?: number;
   ai?: boolean;
+  /** criação → `fileRev` do arquivo que está no aparelho (só quando > 0) */
+  revs?: Record<string, number>;
 }
 
 type Rec = { id: string; createdAt?: number; updatedAt?: number; publishedAt?: number; status?: string } & Record<string, unknown>;
@@ -381,17 +383,28 @@ export function createSync(options: SyncOptions) {
   }
 
   /** Sob demanda: baixa o original do servidor quando não está no aparelho. */
+  /** O arquivo está aqui e é a versão atual (o drive pode ter trocado o conteúdo). */
+  async function hasCurrent(c: Creation): Promise<boolean> {
+    if (!(await files!.has(c))) return false;
+    return (state.revs?.[c.id] ?? 0) >= (c.fileRev ?? 0);
+  }
+
   async function ensureFile(c: Creation): Promise<boolean> {
     if (!files || c.medium === "folder") return false;
-    if (await files.has(c)) return true;
-    if (!active()) return false;
+    if (await hasCurrent(c)) return true;
+    // versão antiga ainda serve enquanto não dá para baixar a nova
+    if (!active()) return files.has(c);
     try {
       const patch = await files.download(c, fileUrl(c.id), headers());
       if (patch) patchLocal(c.id, patch);
+      if (c.fileRev) {
+        state.revs = { ...state.revs, [c.id]: c.fileRev };
+        save();
+      }
       return true;
     } catch {
       failedDownloads.add(c.id);
-      return false;
+      return files.has(c);
     }
   }
 
@@ -400,7 +413,7 @@ export function createSync(options: SyncOptions) {
     for (const c of library.getState().creations) {
       if (!state.keepFiles || !active()) return;
       if (c.medium === "folder" || failedDownloads.has(c.id)) continue;
-      if (!(await files.has(c))) await ensureFile(c);
+      if (!(await hasCurrent(c))) await ensureFile(c);
     }
   }
 
