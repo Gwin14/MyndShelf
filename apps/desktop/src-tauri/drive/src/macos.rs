@@ -12,7 +12,7 @@ use block2::RcBlock;
 use objc2::rc::Retained;
 use objc2::AnyThread;
 use objc2_file_provider::{NSFileProviderDomain, NSFileProviderManager, NSFileProviderWorkingSetContainerItemIdentifier};
-use objc2_foundation::{NSError, NSString};
+use objc2_foundation::{NSError, NSFileManager, NSString};
 
 use crate::Config;
 
@@ -35,9 +35,17 @@ fn app_group() -> Result<String, String> {
     }
 }
 
+/// A pasta do App Group vem do sistema, não de um caminho montado à mão: desde o macOS 15,
+/// só `containerURLForSecurityApplicationGroupIdentifier` confere a autorização do grupo
+/// (o provisioning profile); escrever direto em `~/Library/Group Containers` cai na proteção
+/// de dados de outros apps e o kernel nega ("Operation not permitted").
 fn config_path() -> Result<PathBuf, String> {
-    let home = std::env::var_os("HOME").ok_or("HOME não definido")?;
-    Ok(PathBuf::from(home).join("Library/Group Containers").join(app_group()?).join("drive.json"))
+    let group = app_group()?;
+    let url = NSFileManager::defaultManager()
+        .containerURLForSecurityApplicationGroupIdentifier(&NSString::from_str(&group))
+        .ok_or_else(|| format!("o macOS não liberou o App Group {group} (falta o provisioning profile?)"))?;
+    let dir = url.path().ok_or("pasta do App Group sem caminho")?;
+    Ok(PathBuf::from(dir.to_string()).join("drive.json"))
 }
 
 fn domain() -> Retained<NSFileProviderDomain> {

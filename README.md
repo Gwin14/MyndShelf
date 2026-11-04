@@ -62,7 +62,17 @@ corepack pnpm mobile         # app mobile no Expo Go (Node 22.13+)
 
 No Windows e no Linux, o drive roda dentro do app (como o Google Drive): o app precisa estar aberto, nem que seja só na bandeja. No macOS, iOS e Android, quem cuida é o sistema. A API do servidor está em `apps/server/README.md` → *Drive*.
 
-Para gerar o app do macOS com o drive: `MYNDSHELF_APPLE_TEAM_ID=<seu Team ID> APPLE_SIGNING_IDENTITY="Developer ID Application: …" corepack pnpm desktop:build`. Sem Team ID o app funciona, mas o macOS não carrega a extensão (App Group exige assinatura). No iOS, o target precisa do mesmo App Group (`group.com.myndshelf.app`) no seu time: `npx expo prebuild` + `expo run:ios`.
+Para gerar o app do macOS com o drive:
+
+```bash
+MYNDSHELF_APPLE_TEAM_ID=<seu Team ID> \
+APPLE_SIGNING_IDENTITY="Developer ID Application: …" \
+MYNDSHELF_APP_PROFILE=<app>.provisionprofile \
+MYNDSHELF_DRIVE_PROFILE=<extensão>.provisionprofile \
+corepack pnpm desktop:build
+```
+
+Sem Team ID o app funciona, mas o macOS não carrega a extensão (App Group exige assinatura). Sem os provisioning profiles, o macOS 15+ não libera a pasta do App Group e o interruptor responde "Operation not permitted". Crie em developer.apple.com dois App IDs com a capability App Groups (`app.myndshelf.desktop` e `app.myndshelf.desktop.drive`) e um profile de macOS para cada um (*Development* para este Mac, *Developer ID* para distribuir). O build confere se cada profile é do bundle certo e tem o grupo `<Team ID>.app.myndshelf.desktop`. No iOS, o target precisa do mesmo App Group (`group.com.myndshelf.app`) no seu time: `npx expo prebuild` + `expo run:ios`.
 
 Testar o drive do Linux sem o app: `cd apps/desktop/src-tauri/drive && cargo run --example mount -- <url> <token> <pasta>` monta em `<pasta>/MyndShelf`.
 

@@ -10,12 +10,17 @@
  * Variáveis:
  *   MYNDSHELF_APPLE_TEAM_ID     Team ID da Apple (obrigatório para o drive funcionar)
  *   APPLE_SIGNING_IDENTITY      "Developer ID Application: …" (a mesma que o Tauri usa)
+ *   MYNDSHELF_APP_PROFILE       provisioning profile do app (app.myndshelf.desktop, com App Groups)
+ *   MYNDSHELF_DRIVE_PROFILE     provisioning profile da extensão (app.myndshelf.desktop.drive)
+ *
+ * Os profiles são necessários desde o macOS 15: sem eles o sistema não libera a pasta do
+ * App Group ("Operation not permitted"). O do app entra pelo scripts/tauri-build.mjs.
  *
  * Fora do macOS não faz nada. Sem Team ID, gera uma extensão com assinatura ad-hoc:
  * o app abre normalmente, mas o macOS não carrega o drive.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,6 +40,32 @@ const identity = process.env.APPLE_SIGNING_IDENTITY?.trim() || "-";
 const group = `${team || "NOTEAM"}.${hostId}`;
 
 if (!team) console.warn("⚠ MYNDSHELF_APPLE_TEAM_ID não definido: a extensão do Finder vai junto, mas o macOS não vai carregá-la.");
+
+/** Lê um .provisionprofile e confere se ele cobre este bundle e o App Group. */
+function checkProfile(path, bundleId) {
+  // o profile inteiro tem datas e dados (não vira JSON); os entitlements viram
+  const json = execFileSync("sh", ["-c", 'security cms -D -i "$1" | plutil -extract Entitlements json -o - -', "sh", path], { encoding: "utf8" });
+  const ent = JSON.parse(json);
+  const want = `${team}.${bundleId}`;
+  const got = ent["com.apple.application-identifier"] ?? ent["application-identifier"];
+  if (got !== want && got !== `${team}.*`) throw new Error(`${path}: o profile é de ${got}, mas o bundle é ${want}`);
+  const groups = ent["com.apple.security.application-groups"] ?? [];
+  if (!groups.includes(group) && !groups.includes(`${team}.*`)) throw new Error(`${path}: o profile não tem o App Group ${group}`);
+}
+
+/** Com profile, os entitlements precisam dizer de quem é o bundle (senão o macOS não abre). */
+const identityEntitlements = (bundleId) => ({
+  "com.apple.application-identifier": `${team}.${bundleId}`,
+  "com.apple.developer.team-identifier": team,
+});
+
+const appProfile = process.env.MYNDSHELF_APP_PROFILE?.trim() || "";
+const driveProfile = process.env.MYNDSHELF_DRIVE_PROFILE?.trim() || "";
+if (team && appProfile) checkProfile(appProfile, hostId);
+if (team && driveProfile) checkProfile(driveProfile, `${hostId}.drive`);
+if (team && (!appProfile || !driveProfile)) {
+  console.warn("⚠ sem MYNDSHELF_APP_PROFILE/MYNDSHELF_DRIVE_PROFILE: no macOS 15+ o drive falha com \"Operation not permitted\".");
+}
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(join(appex, "Contents", "MacOS"), { recursive: true });
@@ -106,10 +137,18 @@ writeFileSync(
     "com.apple.security.app-sandbox": true,
     "com.apple.security.network.client": true,
     "com.apple.security.application-groups": [group],
+    ...(team && driveProfile ? identityEntitlements(`${hostId}.drive`) : {}),
   }),
 );
 // o app em si: mesmo grupo, para escrever drive.json na pasta compartilhada
-writeFileSync(join(out, "MyndShelf.entitlements"), plist({ "com.apple.security.application-groups": [group] }));
+writeFileSync(
+  join(out, "MyndShelf.entitlements"),
+  plist({
+    "com.apple.security.application-groups": [group],
+    ...(team && appProfile ? identityEntitlements(hostId) : {}),
+  }),
+);
+if (team && driveProfile) copyFileSync(driveProfile, join(appex, "Contents", "embedded.provisionprofile"));
 
 const sign = ["--force", "--sign", identity, "--entitlements", appexEntitlements];
 if (identity !== "-") sign.push("--options", "runtime", "--timestamp");
