@@ -23,3 +23,8 @@ myndshelf-drive = { path = "drive" }
 objc2 = "0.6"
 objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPasteboard", "NSApplication", "NSResponder", "NSImage", "NSWorkspace"] }
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSData"] }
+
+# O strip padrão do release gera proc-macros que o dyld do macOS recusa
+# ("mis-aligned LINKEDIT string pool"); sem strip nelas o build funciona.
+[profile.release.build-override]
+strip = false

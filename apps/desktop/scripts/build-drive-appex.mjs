@@ -49,7 +49,7 @@ for (const arch of ["arm64", "x86_64"]) {
   const bin = join(out, `MyndShelfDrive-${arch}`);
   sh("xcrun", [
     "swiftc",
-    "-target", `${arch}-apple-macos12.0`,
+    "-target", `${arch}-apple-macos13.0`,
     "-sdk", sdk,
     "-swift-version", "5",
     "-O",
@@ -88,7 +88,7 @@ writeFileSync(
     CFBundlePackageType: "XPC!",
     CFBundleShortVersionString: version,
     CFBundleVersion: version,
-    LSMinimumSystemVersion: "12.0",
+    LSMinimumSystemVersion: "13.0",
     MyndShelfAppGroup: group,
     NSExtension: {
       NSExtensionPointIdentifier: "com.apple.fileprovider-nonui",
