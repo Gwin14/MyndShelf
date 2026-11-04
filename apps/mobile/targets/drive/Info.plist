@@ -5,11 +5,11 @@
 	<key>CFBundleDisplayName</key>
 	<string>MyndShelf</string>
 	<key>MyndShelfAppGroup</key>
-	<string>group.com.myndshelf.app</string>
+	<string>group.app.myndshelf</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionFileProviderDocumentGroup</key>
-		<string>group.com.myndshelf.app</string>
+		<string>group.app.myndshelf</string>
 		<key>NSExtensionFileProviderSupportsEnumeration</key>
 		<true/>
 		<key>NSExtensionPointIdentifier</key>

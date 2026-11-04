@@ -9,7 +9,7 @@ struct DriveConfig: Codable {
   var token: String
 
   static var group: String {
-    Bundle.main.object(forInfoDictionaryKey: "MyndShelfAppGroup") as? String ?? "group.com.myndshelf.app"
+    Bundle.main.object(forInfoDictionaryKey: "MyndShelfAppGroup") as? String ?? "group.app.myndshelf"
   }
 
   static func load() -> DriveConfig? {

@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name           = 'MyndShelfDrive'
+  s.name           = 'MyndShelfDriveBridge'
   s.version        = '0.1.0'
   s.summary        = 'A Estante do MyndShelf no app Arquivos'
   s.description    = 'Registra o domínio do File Provider e entrega endereço e token à extensão (targets/drive).'

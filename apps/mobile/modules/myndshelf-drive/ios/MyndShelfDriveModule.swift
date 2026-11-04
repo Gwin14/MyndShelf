@@ -4,7 +4,7 @@ import FileProvider
 /// O app entrega endereço e token à extensão (targets/drive) pela pasta do App Group
 /// e registra o domínio que aparece no app Arquivos.
 public class MyndShelfDriveModule: Module {
-  static let group = "group.com.myndshelf.app"
+  static let group = "group.app.myndshelf"
   static let domain = NSFileProviderDomain(identifier: NSFileProviderDomainIdentifier("myndshelf"), displayName: "MyndShelf")
 
   static var configURL: URL? {

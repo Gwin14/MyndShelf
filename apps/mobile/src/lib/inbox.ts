@@ -7,7 +7,7 @@ import { library, ready } from "./store";
 import { toast } from "./toast";
 
 /** O mesmo App Group de targets/share (Inbox.swift). */
-const GROUP = "group.com.myndshelf.app";
+const GROUP = "group.app.myndshelf";
 
 interface SharedItem {
   id: string;
