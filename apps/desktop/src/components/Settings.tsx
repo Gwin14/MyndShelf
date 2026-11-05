@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAi } from "../lib/ai";
 import { APP_ICONS, iconUrl, useAppIcon } from "../lib/appIcon";
+import { useAutostart } from "../lib/autostart";
 import { exportLibrary, importLibrary } from "../lib/backup";
-import { isTauri, openExternal } from "../lib/platform";
+import { disableDrive, driveStore, enableDrive, fileManagerName, followServer, refreshDrive } from "../lib/drive";
+import { isTauri, openExternal, openPath } from "../lib/platform";
 import { suggestedServer, sync, useSync } from "../lib/sync";
 import { Modal } from "./Modal";
 
@@ -51,6 +53,8 @@ export function Settings({ onClose }: { onClose: () => void }) {
 
         <IconSettings />
 
+        {isTauri && <StartupSettings />}
+
         <ServerSettings />
 
         <h2 className="settings-title settings-section">Acervo</h2>
@@ -98,6 +102,27 @@ function IconSettings() {
   );
 }
 
+function StartupSettings() {
+  const { enabled, busy, error, refresh, set } = useAutostart();
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+  return (
+    <>
+      <h2 className="settings-title settings-section">Inicialização</h2>
+      <label className="settings-toggle">
+        <input type="checkbox" checked={enabled} disabled={busy} onChange={(e) => void set(e.target.checked)} />
+        <span>
+          <strong>Abrir com o computador, em segundo plano</strong>
+          O MyndShelf liga junto com o sistema sem abrir a janela: a caixa da bandeja e a Estante no {fileManagerName} ficam prontas.
+          Fechar a janela também só a esconde; para encerrar de vez, use Sair no ícone da bandeja.
+        </span>
+      </label>
+      {error && <p className="sync-line sync-error">{error}</p>}
+    </>
+  );
+}
+
 function ServerAiNote() {
   const ai = useSync((s) => s.ai);
   if (!ai) return null;
@@ -129,6 +154,7 @@ function ServerSettings() {
     try {
       await sync.connect({ url, token });
       setToken("");
+      void followServer();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -152,7 +178,7 @@ function ServerSettings() {
             <button className="btn" disabled={status.phase === "syncing"} onClick={() => void sync.now()}>
               Sincronizar agora
             </button>
-            <button className="btn" onClick={() => void sync.disconnect()}>
+            <button className="btn" onClick={() => void disableDrive().then(() => sync.disconnect())}>
               Desconectar
             </button>
           </div>
@@ -163,6 +189,7 @@ function ServerSettings() {
               Baixa todos os originais da Estante. Desligado, cada arquivo desce quando você abre e fica guardado aqui.
             </span>
           </label>
+          {isTauri && <DriveSettings />}
         </>
       ) : (
         <>
@@ -189,6 +216,37 @@ function ServerSettings() {
           {error && <p className="sync-line sync-error">{error}</p>}
         </>
       )}
+    </>
+  );
+}
+
+/** A Estante como pasta do sistema, igual Google Drive / Proton Drive. */
+function DriveSettings() {
+  const d = driveStore();
+  useEffect(() => {
+    void refreshDrive();
+  }, []);
+  if (!d.supported) return null;
+  return (
+    <>
+      <label className="settings-toggle">
+        <input type="checkbox" checked={d.enabled} disabled={d.busy} onChange={(e) => void (e.target.checked ? enableDrive() : disableDrive())} />
+        <span>
+          <strong>Mostrar a Estante no {fileManagerName}</strong>
+          Cada estante vira uma pasta. Os arquivos baixam quando você abre; o que você soltar, renomear ou apagar ali vale para o acervo.
+          {d.busy && " Ligando…"}
+        </span>
+      </label>
+      {d.enabled && d.running && d.location && (
+        <div className="key-row">
+          <button className="btn" onClick={() => void openPath(d.location!)}>
+            Abrir pasta
+          </button>
+          <span className="settings-sub mono">{d.location}</span>
+        </div>
+      )}
+      {d.enabled && d.running && !d.location && <p className="settings-sub settings-note">Aparece na barra lateral do Finder, em Locais.</p>}
+      {d.error && <p className="sync-line sync-error">{d.error}</p>}
     </>
   );
 }

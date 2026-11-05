@@ -3,7 +3,7 @@ import Foundation
 /// Caixa de entrada compartilhada com o app (App Group): a extensão deixa um JSON por item,
 /// o app lê `inbox/` ao abrir, guarda na Captura e apaga o arquivo.
 enum Inbox {
-  static let group = "group.com.myndshelf.app"
+  static let group = "group.app.myndshelf"
 
   static var folder: URL? {
     guard let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) else { return nil }

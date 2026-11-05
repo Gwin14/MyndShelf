@@ -56,7 +56,55 @@ export const API = {
   files: "/api/files",
   search: "/api/search",
   ai: "/api/ai/gemini",
+  drive: "/api/drive",
 } as const;
+
+/* ───────────────────────── drive: a Estante como pastas no Finder/Explorer ───────────────────────── */
+
+/** Pasta-raiz do drive. Arquivos sem estante ficam nela; cada estante é uma pasta. */
+export const DRIVE_ROOT = "root";
+
+/**
+ * Um item do drive. Pastas são estantes; arquivos são criações com original no servidor.
+ * `name` já vem pronto para o disco (sem caracteres proibidos, sem repetição na mesma pasta).
+ */
+export interface DriveItem {
+  id: string;
+  parentId: string;
+  kind: "folder" | "file";
+  name: string;
+  size?: number;
+  mime?: string;
+  createdAt?: number;
+  /** muda quando nome, pasta, tamanho ou conteúdo mudam (inclusive por causa de um vizinho de mesmo nome) */
+  version: string;
+  /** muda só quando o conteúdo do arquivo muda */
+  contentVersion?: number;
+  deleted?: true;
+}
+
+/** GET /api/drive/items */
+export interface DriveListResponse {
+  items: DriveItem[];
+  /** passe como `since` em /api/drive/changes */
+  cursor: number;
+}
+
+/** GET /api/drive/changes?since=<cursor> */
+export interface DriveChangesResponse {
+  /** com `full`, todos os itens vivos (o que não veio saiu) mais as exclusões */
+  items: DriveItem[];
+  cursor: number;
+  more: boolean;
+  /** algo da Estante mudou e `items` é a árvore inteira */
+  full: boolean;
+}
+
+/** PATCH /api/drive/items/:id */
+export interface DrivePatch {
+  name?: string;
+  parentId?: string;
+}
 
 /** Campos que só valem no aparelho de origem e nunca saem dele. */
 export const LOCAL_ONLY: Partial<Record<Collection, string[]>> = {

@@ -9,6 +9,7 @@ import { cors } from "hono/cors";
 import { serializeLibrary } from "@myndshelf/core";
 import { API, type PushRequest, type ServerInfo } from "@myndshelf/sync/protocol";
 import type { Db } from "./db";
+import { mountDrive } from "./drive";
 
 export interface AppOptions {
   db: Db;
@@ -40,7 +41,7 @@ export function createApp(o: AppOptions) {
   // o app desktop (tauri://localhost) e o Expo falam com o servidor de outra origem
   app.use(
     "/api/*",
-    cors({ origin: "*", allowHeaders: ["authorization", "content-type", "x-file-name"], allowMethods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"], maxAge: 86400 }),
+    cors({ origin: "*", allowHeaders: ["authorization", "content-type", "x-file-name"], allowMethods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], maxAge: 86400 }),
   );
 
   app.get(API.info, (c) => c.json<ServerInfo>({ app: "myndshelf-server", version: o.version ?? "0.0.0", ai: !!o.geminiKey }));
@@ -99,11 +100,8 @@ export function createApp(o: AppOptions) {
     return c.body(Readable.toWeb(createReadStream(fileOf(id))) as ReadableStream, 200, headers);
   });
 
-  app.put(`${API.files}/:id`, async (c) => {
-    const id = c.req.param("id");
-    if (!FILE_ID.test(id)) return c.json({ error: "bad id" }, 400);
-    const body = c.req.raw.body;
-    if (!body) return c.json({ error: "empty" }, 400);
+  /** Grava o corpo em disco (arquivo temporário + rename) e registra nome, tipo e tamanho. */
+  async function saveFile(id: string, body: ReadableStream, name: string | null, mime: string | null): Promise<number> {
     await mkdir(o.filesDir, { recursive: true });
     const tmp = `${fileOf(id)}.${process.pid}.${Date.now()}.part`;
     try {
@@ -114,10 +112,23 @@ export function createApp(o: AppOptions) {
       throw e;
     }
     const { size } = await stat(fileOf(id));
+    o.db.files.put(id, name, mime, size);
+    return size;
+  }
+
+  app.put(`${API.files}/:id`, async (c) => {
+    const id = c.req.param("id");
+    if (!FILE_ID.test(id)) return c.json({ error: "bad id" }, 400);
+    const body = c.req.raw.body;
+    if (!body) return c.json({ error: "empty" }, 400);
     const name = c.req.header("x-file-name");
-    o.db.files.put(id, name ? decodeURIComponent(name) : null, c.req.header("content-type") ?? null, size);
+    const size = await saveFile(id, body, name ? decodeURIComponent(name) : null, c.req.header("content-type") ?? null);
+    // o drive só mostra criações com original: avisa que este acabou de chegar
+    o.db.touch("creations", id);
     return c.json({ ok: true, size });
   });
+
+  mountDrive(app, { db: o.db, saveFile, removeFile });
 
   app.delete(`${API.files}/:id`, async (c) => {
     await removeFile(c.req.param("id"));

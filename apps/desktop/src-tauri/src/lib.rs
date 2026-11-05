@@ -1,3 +1,5 @@
+mod drive;
+
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -337,6 +339,29 @@ fn macos_icon(png: Option<&'static [u8]>) {
     }
 }
 
+/* ───────────────────────── segundo plano / iniciar com o sistema ───────────────────────── */
+
+/// Argumento que o login do sistema passa ao abrir o app: só bandeja e drive, sem janela.
+const HIDDEN_ARG: &str = "--hidden";
+
+fn show_main(app: &AppHandle) {
+    #[cfg(target_os = "macos")]
+    let _ = app.set_dock_visibility(true);
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+}
+
+/// Fechar a janela só a esconde: a bandeja, o drive e a sincronização continuam.
+/// No macOS o ícone sai do Dock até a janela voltar.
+fn hide_main(window: &tauri::Window) {
+    let _ = window.hide();
+    #[cfg(target_os = "macos")]
+    let _ = window.app_handle().set_dock_visibility(false);
+}
+
 fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Abrir MyndShelf", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
@@ -349,13 +374,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
-            "open" => {
-                if let Some(w) = app.get_webview_window("main") {
-                    let _ = w.show();
-                    let _ = w.unminimize();
-                    let _ = w.set_focus();
-                }
-            }
+            "open" => show_main(app),
             "quit" => app.exit(0),
             _ => {}
         })
@@ -372,14 +391,36 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .args([HIDDEN_ARG])
+                .macos_launcher(tauri_plugin_autostart::MacosLauncher::LaunchAgent)
+                .build(),
+        )
         .manage(Dropped::default())
         .manage(DropzoneState::default())
+        .manage(drive::DriveState::default())
         .setup(|app| {
             build_tray(app)?;
             dropzone_window(app.handle())?;
+            drive::resume(app.handle());
+            // a janela nasce escondida (tauri.conf.json); aparece a não ser que o login a tenha aberto
+            if std::env::args().any(|a| a == HIDDEN_ARG) {
+                #[cfg(target_os = "macos")]
+                app.set_dock_visibility(false);
+            } else {
+                show_main(app.handle());
+            }
             Ok(())
         })
         .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "main" {
+                    api.prevent_close();
+                    hide_main(window);
+                }
+                return;
+            }
             if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
                 if paths.is_empty() {
                     // não é arquivo: provavelmente um link ou texto
@@ -391,7 +432,15 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed, set_app_icon])
-        .run(tauri::generate_context!())
-        .expect("erro ao iniciar o MyndShelf");
+        .invoke_handler(tauri::generate_handler![fetch_html, resolve_url, path_info, read_file, open_path, hide_dropzone, mouse_pressed, set_app_icon, drive::drive_status, drive::drive_enable, drive::drive_disable])
+        .build(tauri::generate_context!())
+        .expect("erro ao iniciar o MyndShelf")
+        .run(|app, event| {
+            // clique no ícone do Dock com a janela escondida
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                show_main(app);
+            }
+            let _ = (app, event);
+        });
 }

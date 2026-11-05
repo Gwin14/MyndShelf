@@ -1,0 +1,45 @@
+[package]
+name = "myndshelf-drive"
+version = "0.1.0"
+description = "A Estante do MyndShelf no gerenciador de arquivos (Finder, Explorer, Nautilus…)"
+edition = "2021"
+
+# Sem cliente HTTP próprio: o app entrega um `Http` (reqwest no Tauri).
+# Assim o crate compila para qualquer alvo sem C nem SDK.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+fuser = { version = "0.15", default-features = false }
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+notify = { version = "6", default-features = false }
+windows = { version = "0.58", features = [
+  "Foundation",
+  "Foundation_Collections",
+  "Storage",
+  "Storage_Provider",
+  "Storage_Streams",
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Security_Authorization",
+  "Win32_Storage_CloudFilters",
+  "Win32_Storage_FileSystem",
+  "Win32_System_CorrelationVector",
+  "Win32_System_IO",
+  "Win32_System_Threading",
+  "Win32_System_WinRT",
+  "Security_Cryptography",
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSError", "NSURL", "NSFileManager"] }
+objc2-file-provider = { version = "0.3", default-features = false, features = ["std", "block2", "NSFileProviderDomain", "Extension", "NSFileProviderItem", "NSFileProviderEnumerating"] }
+
+# só para `cargo run --example mount` (testar o drive sem o app)
+[dev-dependencies]
+ureq = "2"

@@ -12,6 +12,7 @@ import { useAi } from "../lib/ai";
 import { exportLibrary, importLibrary } from "../lib/backup";
 import { openInApp } from "../lib/platform";
 import { useLibrary } from "../lib/store";
+import { Drive } from "../../modules/myndshelf-drive";
 import { sync, useSync } from "../lib/sync";
 import { colors, fonts } from "../lib/theme";
 import { toast } from "../lib/toast";
@@ -184,6 +185,11 @@ function ServerSettings() {
             </View>
             <Switch value={status.keepFiles} onValueChange={sync.setKeepFiles} trackColor={{ true: colors.amber, false: colors.dusk }} thumbColor={colors.paper} />
           </View>
+          {Drive && (
+            <Text style={[styles.sub, { marginTop: 14 }]}>
+              A Estante também aparece no app Arquivos, em “MyndShelf”: cada estante é uma pasta, e o que você salvar ali entra no acervo.
+            </Text>
+          )}
         </>
       ) : (
         <>

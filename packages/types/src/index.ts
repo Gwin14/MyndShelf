@@ -174,6 +174,8 @@ export interface Creation {
   preview?: string;
   mime?: string;
   size?: number;
+  /** sobe quando o conteúdo do arquivo é trocado fora do app (pelo drive): os aparelhos baixam de novo */
+  fileRev?: number;
   year?: number;
   notes?: string;
   /** Leitura do documento, guardada depois de gerada. */

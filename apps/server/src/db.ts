@@ -70,6 +70,10 @@ export function openDb(path: string) {
     unindex: db.prepare("DELETE FROM search WHERE collection = ? AND id = ?"),
     index: db.prepare("INSERT INTO search (collection, id, title, body, tags) VALUES (?, ?, ?, ?, ?)"),
     live: db.prepare("SELECT data FROM records WHERE collection = ? AND deleted = 0"),
+    liveRows: db.prepare("SELECT data, updated_at FROM records WHERE collection = ? AND deleted = 0"),
+    touch: db.prepare("UPDATE records SET seq = ? WHERE collection = ? AND id = ?"),
+    sinceAll: db.prepare("SELECT * FROM records WHERE seq > ? ORDER BY seq LIMIT ?"),
+    fileAll: db.prepare("SELECT id, size FROM files"),
     fileGet: db.prepare("SELECT * FROM files WHERE id = ?"),
     filePut: db.prepare(`
       INSERT INTO files (id, name, mime, size, created_at) VALUES (?, ?, ?, ?, ?)
@@ -160,6 +164,35 @@ export function openDb(path: string) {
       return out as unknown as LibraryData;
     },
 
+    /** Um registro vivo, com quando foi editado. */
+    record<T = Record<string, unknown>>(c: Collection, id: string): { data: T; updatedAt: number } | undefined {
+      const r = q.get.get(c, id) as Row | undefined;
+      return r && !r.deleted ? { data: JSON.parse(r.data ?? "null") as T, updatedAt: r.updated_at } : undefined;
+    },
+
+    /** Os registros vivos de uma coleção, com quando foram editados. */
+    rows<T = Record<string, unknown>>(c: Collection): { data: T; updatedAt: number }[] {
+      return (q.liveRows.all(c) as { data: string; updated_at: number }[]).map((r) => ({ data: JSON.parse(r.data) as T, updatedAt: r.updated_at }));
+    },
+
+    /**
+     * Avisa que o registro mudou sem mexer nele (ex.: o arquivo da criação acabou de subir).
+     * Não muda `updated_at` nem o aparelho de origem: só entra de novo em "mudanças desde X".
+     */
+    touch(c: Collection, id: string) {
+      tx(() => q.touch.run(++seq, c, id));
+    },
+
+    /** Como `changes`, mas inclui tudo (o drive quer ver até o que ele mesmo escreveu). */
+    changesAll(since: number, limit: number): ChangesResponse {
+      const rows = q.sinceAll.all(since, limit + 1) as unknown as Row[];
+      const more = rows.length > limit;
+      const page = rows.slice(0, limit);
+      return { changes: page.map(toChange), cursor: more ? page[page.length - 1].seq : seq, more };
+    },
+
+    cursor: () => seq,
+
     search(text: string, limit = 30): SearchHit[] {
       const words = text.match(/[\p{L}\p{N}]+/gu);
       if (!words?.length) return [];
@@ -171,6 +204,8 @@ export function openDb(path: string) {
       get: (id: string) => q.fileGet.get(id) as { id: string; name: string | null; mime: string | null; size: number } | undefined,
       put: (id: string, name: string | null, mime: string | null, size: number) => q.filePut.run(id, name, mime, size, Date.now()),
       remove: (id: string) => q.fileDel.run(id),
+      /** id → tamanho de todos os originais guardados */
+      sizes: () => new Map((q.fileAll.all() as { id: string; size: number }[]).map((r) => [r.id, r.size])),
     },
 
     close: () => db.close(),

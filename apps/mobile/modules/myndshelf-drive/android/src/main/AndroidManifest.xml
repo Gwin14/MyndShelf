@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- a Estante no app Arquivos e no seletor de documentos de qualquer app -->
+    <provider
+      android:name="com.myndshelf.drive.DriveDocumentsProvider"
+      android:authorities="${applicationId}.drive"
+      android:exported="true"
+      android:grantUriPermissions="true"
+      android:permission="android.permission.MANAGE_DOCUMENTS">
+      <intent-filter>
+        <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+      </intent-filter>
+    </provider>
+  </application>
+</manifest>

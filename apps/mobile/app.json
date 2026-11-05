@@ -11,9 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.myndshelf.app",
+      "appleTeamId": "77MXYLFJ7J",
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.com.myndshelf.app"
+          "group.app.myndshelf"
         ]
       },
       "icon": "./assets/app-icons/MindShelf.icon"

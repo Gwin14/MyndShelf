@@ -94,6 +94,22 @@ Tudo em `/api/*` pede `authorization: Bearer <token>`, menos `/api/info`. O cont
 | `POST /api/ai/gemini/<modelo>:<ação>` | repassa ao Gemini com a chave do servidor |
 | `GET /__og?url=`, `/__resolve?url=` | leitura de links para o site |
 
+### Drive (Estante no Finder/Explorer/Arquivos)
+
+As extensões de sistema veem a Estante como pastas: cada estante é uma pasta na raiz (`root`), e cada criação com original no servidor é um arquivo (sem estante → na raiz). Cada operação vira uma mudança comum do sync, do aparelho `drive`, então os apps recebem tudo pelo caminho de sempre. Código em `src/drive.ts`.
+
+| Rota | |
+|---|---|
+| `GET /api/drive/items` | árvore inteira + cursor |
+| `GET /api/drive/items/:id` | um item |
+| `GET /api/drive/changes?since=` | se algo da Estante mudou, a árvore inteira + exclusões (`deleted`); compare pelo `version` |
+| `POST /api/drive/files?parent=<id\|root>` | corpo = arquivo, `x-file-name` + `content-type` → cria a criação |
+| `PUT /api/drive/files/:id` | troca o conteúdo; sobe `fileRev` e os apps baixam de novo |
+| `POST /api/drive/folders` | `{ name }` → estante nova (só na raiz) |
+| `PATCH /api/drive/items/:id` | `{ name?, parentId? }` → renomeia / move |
+| `DELETE /api/drive/items/:id` | apaga; estante apagada devolve as criações para a raiz |
+| `GET /api/files/:id` | conteúdo (o mesmo dos apps) |
+
 ## Desenvolvimento
 
 Node 22.13+ (usa o `node:sqlite` embutido).

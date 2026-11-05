@@ -25,3 +25,4 @@ coverage
 # servidor self-hosted (dados locais de desenvolvimento)
 apps/server/data
 apps/server/backups
+apps/desktop/src-tauri/drive/Cargo.lock
