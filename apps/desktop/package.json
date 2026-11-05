@@ -22,6 +22,7 @@
     "@myndshelf/sync": "workspace:*",
     "@myndshelf/types": "workspace:*",
     "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-autostart": "^2.7.0",
     "@tauri-apps/plugin-opener": "^2.7.2",
     "dompurify": "^3.4.17",
     "idb-keyval": "^6.3.0",

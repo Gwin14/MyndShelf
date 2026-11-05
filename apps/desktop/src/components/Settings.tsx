@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAi } from "../lib/ai";
 import { APP_ICONS, iconUrl, useAppIcon } from "../lib/appIcon";
+import { useAutostart } from "../lib/autostart";
 import { exportLibrary, importLibrary } from "../lib/backup";
 import { disableDrive, driveStore, enableDrive, fileManagerName, followServer, refreshDrive } from "../lib/drive";
 import { isTauri, openExternal, openPath } from "../lib/platform";
@@ -52,6 +53,8 @@ export function Settings({ onClose }: { onClose: () => void }) {
 
         <IconSettings />
 
+        {isTauri && <StartupSettings />}
+
         <ServerSettings />
 
         <h2 className="settings-title settings-section">Acervo</h2>
@@ -95,6 +98,27 @@ function IconSettings() {
           </button>
         ))}
       </div>
+    </>
+  );
+}
+
+function StartupSettings() {
+  const { enabled, busy, error, refresh, set } = useAutostart();
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+  return (
+    <>
+      <h2 className="settings-title settings-section">Inicialização</h2>
+      <label className="settings-toggle">
+        <input type="checkbox" checked={enabled} disabled={busy} onChange={(e) => void set(e.target.checked)} />
+        <span>
+          <strong>Abrir com o computador, em segundo plano</strong>
+          O MyndShelf liga junto com o sistema sem abrir a janela: a caixa da bandeja e a Estante no {fileManagerName} ficam prontas.
+          Fechar a janela também só a esconde; para encerrar de vez, use Sair no ícone da bandeja.
+        </span>
+      </label>
+      {error && <p className="sync-line sync-error">{error}</p>}
     </>
   );
 }
